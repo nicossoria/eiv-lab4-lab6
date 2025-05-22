@@ -32,9 +32,6 @@ SPDX-License-Identifier: MIT
 
 /* === Macros definitions ========================================================================================== */
 
-// #define MAX_NOMBRE 32
-// #define MAX_APELLIDO 32
-
 /* === Private data type declarations ============================================================================== */
 
 //! Estructura que representa una salida digital
@@ -64,8 +61,9 @@ digital_output_t DigitalOutputCreate(uint8_t port, uint8_t pin) {
     if (self != NULL) {
         self->port = port;
         self->pin = pin;
-        // Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, port, pin, true);
-        // Chip_GPIO_SetPinState(LPC_GPIO_PORT, port, pin, false);
+        Chip_GPIO_SetPinState(LPC_GPIO_PORT, self->port, self->pin, false);
+        Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, self->port,self-> pin, true);
+        
     }
 
     return self;
@@ -89,6 +87,7 @@ digital_input_t DigitalInputCreate(uint8_t port, uint8_t pin, bool inverted) {
         self->port = port;
         self->pin = pin;
         self->inverted = inverted;
+        Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, self->port, self->pin, false);
         self->lastState = DigitalInputGetIsActive(self);
     }
 
@@ -96,7 +95,7 @@ digital_input_t DigitalInputCreate(uint8_t port, uint8_t pin, bool inverted) {
 }
 
 bool DigitalInputGetIsActive(digital_input_t self) {
-    bool state = true; // lamar a la funcion del fabricante y comparar con 1
+    bool state = Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, self->port, self->pin) !=0;
     if (self->inverted) {
         state = !state;
     }
@@ -107,7 +106,7 @@ bool DigitalWasActive(digital_input_t self) {
     return DIGITAL_INPUT_WAS_ACTIVATED == DigitalWasChanged(self);
 }
 
-bool DigitalWasInactive(digital_input_t self); // Opcion mas facil
+bool DigitalWasInactive(digital_input_t self);
 
 digital_states_t DigitalWasChanged(digital_input_t self) {
     digital_states_t result = DIGITAL_INPUT_NO_CHANGE;
