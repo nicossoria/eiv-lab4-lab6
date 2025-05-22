@@ -17,8 +17,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 *********************************************************************************************************************/
 
-#ifndef BOAR_H_
-#define BOAR_H_
+#ifndef BOARD_H_
+#define BOARD_H_
 
 /** @file boar.h
  ** @brief Definiciones de los pines de la placa de desarrollo
@@ -100,6 +100,20 @@ extern "C" {
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
+
+
+/**
+ * @brief Funcion para inicializar las salidas digitales
+ * 
+*/
+void BoardOutputInit(void);
+
+
+/**
+ * @brief Funcion para inicializar las entradas digitales
+ * 
+*/
+void BoardInputInit(void);
 
 /* === End of conditional blocks =================================================================================== */
 

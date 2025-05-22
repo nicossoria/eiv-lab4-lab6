@@ -75,7 +75,7 @@ void DigitalOutputActivate(digital_output_t self);
 /**
  * @brief Funcion para desactivar una salida digital
  *
- * @param self
+ * @param self Puntero a la salida digital creada
  */
 void DigitalOutputDeactivate(digital_output_t self);
 
@@ -95,12 +95,40 @@ void DigitalOutputToggle(digital_output_t self);
  */
 digital_input_t DigitalInputCreate(uint8_t gpio, uint8_t bit, bool inverted);
 
+
+/**
+ * @brief Funcion para obtener el estado actual de una entrada digital
+ *
+ * @param self Puntero a la entrada digital creada
+ * @return bool Estado de la entrada digital
+ */
 bool DigitalInputGetIsActive(digital_input_t input);
 
+
+/**
+ * @brief Funcion para indicar si la entrada digital fue activada desde la ultima lectura
+ *
+ * @param self Puntero a la entrada digital creada
+ * @return bool Estado anterior de la entrada digital
+ */
 bool DigitalWasActive(digital_input_t input); // Opcion mas facil
 
+
+/**
+ * @brief Funcion para indicar si la entrada digital fue desactivada desde la ultima lectura
+ *
+ * @param self Puntero a la entrada digital creada
+ * @return bool Estado anterior de la entrada digital
+ */
 bool DigitalWasInactive(digital_input_t input); // Opcion mas facil
 
+
+/**
+ * @brief Funcion para indicar si la entrada digital cambio desde la ultima lectura
+ *
+ * @param self Puntero a la entrada digital creada
+ * @return bool Estado anterior de la entrada digital
+ */
 enum digital_states_e DigitalWasChanged(digital_input_t input);
 
 /* === End of conditional blocks =================================================================================== */
