@@ -1,3 +1,3 @@
-# Electronica IV - Laboratorio 2 - Laboratorio 3
+# Electronica IV - Laboratorio 2 - Laboratorio 4
 
 Alumno: Martin Nicolas Soria
