@@ -165,11 +165,9 @@ int main(void) {
             DigitalOutputDeactivate(led_RGB_blue);
         }
 
-        //current_state = (Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, TEC_2_GPIO, TEC_2_BIT) == 0);
         if (DigitalWasActive(tec_toggle)) {
             DigitalOutputToggle(led_red);
         }
-        last_state = current_state;
 
         if (DigitalInputGetIsActive(tec_turn_on)) {
             DigitalOutputActivate(led_yellow);

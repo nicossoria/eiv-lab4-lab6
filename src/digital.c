@@ -62,8 +62,7 @@ digital_output_t DigitalOutputCreate(uint8_t port, uint8_t pin) {
         self->port = port;
         self->pin = pin;
         Chip_GPIO_SetPinState(LPC_GPIO_PORT, self->port, self->pin, false);
-        Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, self->port,self-> pin, true);
-        
+        Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, self->port, self->pin, true);
     }
 
     return self;
@@ -95,7 +94,7 @@ digital_input_t DigitalInputCreate(uint8_t port, uint8_t pin, bool inverted) {
 }
 
 bool DigitalInputGetIsActive(digital_input_t self) {
-    bool state = Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, self->port, self->pin) !=0;
+    bool state = Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, self->port, self->pin) != 0;
     if (self->inverted) {
         state = !state;
     }
@@ -106,7 +105,9 @@ bool DigitalWasActive(digital_input_t self) {
     return DIGITAL_INPUT_WAS_ACTIVATED == DigitalWasChanged(self);
 }
 
-bool DigitalWasInactive(digital_input_t self);
+bool DigitalWasInactive(digital_input_t self) {
+    return DIGITAL_INPUT_WAS_DEACTIVATED == DigitalWasChanged(self);
+}
 
 digital_states_t DigitalWasChanged(digital_input_t self) {
     digital_states_t result = DIGITAL_INPUT_NO_CHANGE;
