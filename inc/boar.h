@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
-Copyright (c) 2025, Martin Nicolas Soria <soria.m.nicolas@gmail.com>
+Copyright (c) 2025, Soria Martin Nicolas <soria.m.nicolas@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -17,18 +17,17 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 *********************************************************************************************************************/
 
-#ifndef DIGITAL_H
-#define DIGITAL_H
+#ifndef BOAR_H_
+#define BOAR_H_
 
-/** @file digital.h
- ** @brief Declaraciones del modulo para la gestion de entradas y salidas digitales
+/** @file boar.h
+ ** @brief Definiciones de los pines de la placa de desarrollo
  **/
 
 /* === Headers files inclusions ==================================================================================== */
-
 #include <stdint.h>
 #include <stdbool.h>
-
+#include "chip.h"
 /* === Header for C++ compatibility ================================================================================ */
 
 #ifdef __cplusplus
@@ -37,71 +36,70 @@ extern "C" {
 
 /* === Public macros definitions =================================================================================== */
 
+#define LED_R_PORT 2
+#define LED_R_PIN  0
+#define LED_R_FUNC SCU_MODE_FUNC4
+#define LED_R_GPIO 5
+#define LED_R_BIT  0
+
+#define LED_G_PORT 2
+#define LED_G_PIN  1
+#define LED_G_FUNC SCU_MODE_FUNC4
+#define LED_G_GPIO 5
+#define LED_G_BIT  1
+
+#define LED_B_PORT 2
+#define LED_B_PIN  2
+#define LED_B_FUNC SCU_MODE_FUNC4
+#define LED_B_GPIO 5
+#define LED_B_BIT  2
+
+#define LED_1_PORT 2
+#define LED_1_PIN  10
+#define LED_1_FUNC SCU_MODE_FUNC0
+#define LED_1_GPIO 0
+#define LED_1_BIT  14
+
+#define LED_2_PORT 2
+#define LED_2_PIN  11
+#define LED_2_FUNC SCU_MODE_FUNC0
+#define LED_2_GPIO 1
+#define LED_2_BIT  11
+
+#define LED_3_PORT 2
+#define LED_3_PIN  12
+#define LED_3_FUNC SCU_MODE_FUNC0
+#define LED_3_GPIO 1
+#define LED_3_BIT  12
+
+#define TEC_1_PORT 1
+#define TEC_1_PIN  0
+#define TEC_1_FUNC SCU_MODE_FUNC0
+#define TEC_1_GPIO 0
+#define TEC_1_BIT  4
+
+#define TEC_2_PORT 1
+#define TEC_2_PIN  1
+#define TEC_2_FUNC SCU_MODE_FUNC0
+#define TEC_2_GPIO 0
+#define TEC_2_BIT  8
+
+#define TEC_3_PORT 1
+#define TEC_3_PIN  2
+#define TEC_3_FUNC SCU_MODE_FUNC0
+#define TEC_3_GPIO 0
+#define TEC_3_BIT  9
+
+#define TEC_4_PORT 1
+#define TEC_4_PIN  6
+#define TEC_4_FUNC SCU_MODE_FUNC0
+#define TEC_4_GPIO 1
+#define TEC_4_BIT  9
 /* === Public data type declarations =============================================================================== */
-
-//! Estructura que representa los camnbos de una entrada digital
-typedef enum digital_states_e {
-    DIGITAL_INPUT_WAS_DEACTIVATED = -1,
-    DIGITAL_INPUT_NO_CHANGE = 0,
-    DIGITAL_INPUT_WAS_ACTIVATED = 1,
-} digital_states_t;
-
-//! puntero a una salida digital
-typedef struct digital_output_s * digital_output_t;
-
-//! puntero a una entrada digital
-typedef struct digital_input_s * digital_input_t;
 
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
-
-/**
- * @brief Funcion para crear una salida digital
- *
- * @param gpio Puerto de la salida digital
- * @param bit Pin de la salida digital
- * @return digital_output_t Puntero a la salida digital creada
- */
-digital_output_t DigitalOutputCreate(uint8_t gpio, uint8_t bit);
-
-/**
- * @brief Funcion para activar una salida digital
- *
- * @param self Puntero a la salida digital creada
- */
-void DigitalOutputActivate(digital_output_t self);
-
-/**
- * @brief Funcion para desactivar una salida digital
- *
- * @param self
- */
-void DigitalOutputDeactivate(digital_output_t self);
-
-/**
- * @brief Funcion para alternar el estado de una salida digital
- *
- * @param self Puntero a la salida digital creada
- */
-void DigitalOutputToggle(digital_output_t self);
-
-/**
- * @brief Funcion para crear una entrada digital
- *
- * @param gpio Puerto de la entrada digital
- * @param bit Pin de la entrada digital
- * @return digital_input_t Puntero a la entrada digital creada
- */
-digital_input_t DigitalInputCreate(uint8_t gpio, uint8_t bit, bool inverted);
-
-bool DigitalInputGetIsActive(digital_input_t input);
-
-bool DigitalWasActive(digital_input_t input); // Opcion mas facil
-
-bool DigitalWasInactive(digital_input_t input); // Opcion mas facil
-
-enum digital_states_e DigitalWasChanged(digital_input_t input);
 
 /* === End of conditional blocks =================================================================================== */
 
@@ -109,4 +107,4 @@ enum digital_states_e DigitalWasChanged(digital_input_t input);
 }
 #endif
 
-#endif /* DIGITALES_ */
+#endif /* BOARD.H */
