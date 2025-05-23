@@ -66,30 +66,25 @@ int main(void) {
 
     BoardOutputInit();
     BoardInputInit();
-    
+
     digital_output_t led_RGB_blue = DigitalOutputCreate(LED_B_GPIO, LED_B_BIT);
 
     /******************/
-    
+
     digital_output_t led_red = DigitalOutputCreate(LED_1_GPIO, LED_1_BIT);
 
-    
     digital_output_t led_yellow = DigitalOutputCreate(LED_2_GPIO, LED_2_BIT);
 
-    
     digital_output_t led_green = DigitalOutputCreate(LED_3_GPIO, LED_3_BIT);
 
     /******************/
-    
+
     digital_input_t tec_push = DigitalInputCreate(TEC_1_GPIO, TEC_1_BIT, true);
 
-    
     digital_input_t tec_toggle = DigitalInputCreate(TEC_2_GPIO, TEC_2_BIT, true);
 
-    
     digital_input_t tec_turn_on = DigitalInputCreate(TEC_3_GPIO, TEC_3_BIT, true);
 
-    
     digital_input_t tec_turn_off = DigitalInputCreate(TEC_4_GPIO, TEC_4_BIT, true);
 
     while (true) {
