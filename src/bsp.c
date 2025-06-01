@@ -17,7 +17,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 *********************************************************************************************************************/
 
-/** @file board.c
+/** @file bsp.c
  ** @brief Codigo fuente del modulo para la gestion de entradas y salidas digitales
  **/
 
@@ -25,7 +25,7 @@ SPDX-License-Identifier: MIT
 
 #include "chip.h"
 #include "digital.h"
-#include "board.h"
+#include "bsp.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -41,7 +41,7 @@ SPDX-License-Identifier: MIT
 
 /* === Public function definitions ================================================================================= */
 
-void BoardOutputInit(void){
+void bsp_OutputInit(void){
     Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
     Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
     Chip_SCU_PinMuxSet(LED_B_PORT, LED_B_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_B_FUNC);
@@ -50,7 +50,7 @@ void BoardOutputInit(void){
     Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
 }
 
-void BoardInputInit(void){
+void bsp_InputInit(void){
     Chip_SCU_PinMuxSet(TEC_1_PORT, TEC_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_1_FUNC);
     Chip_SCU_PinMuxSet(TEC_2_PORT, TEC_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_2_FUNC);
     Chip_SCU_PinMuxSet(TEC_3_PORT, TEC_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_3_FUNC);

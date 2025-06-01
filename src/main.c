@@ -41,7 +41,7 @@
 /* === Headers files inclusions =============================================================== */
 #include "digital.h"
 #include "chip.h"
-#include "board.h"
+#include "bsp.h"
 #include <stdbool.h>
 
 /* === Macros definitions ====================================================================== */
@@ -64,8 +64,8 @@ int main(void) {
 
     int divisor = 0;
 
-    BoardOutputInit();
-    BoardInputInit();
+    bsp_OutputInit();
+    bsp_InputInit();
 
     digital_output_t led_RGB_blue = DigitalOutputCreate(LED_B_GPIO, LED_B_BIT);
 

@@ -17,10 +17,10 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 *********************************************************************************************************************/
 
-#ifndef BOARD_H_
-#define BOARD_H_
+#ifndef BSP_H_
+#define BSP_H_
 
-/** @file boar.h
+/** @file bsp.h
  ** @brief Definiciones de los pines de la placa de desarrollo
  **/
 
@@ -106,14 +106,14 @@ extern "C" {
  * @brief Funcion para inicializar las salidas digitales
  * 
 */
-void BoardOutputInit(void);
+void bsp_OutputInit(void);
 
 
 /**
  * @brief Funcion para inicializar las entradas digitales
  * 
 */
-void BoardInputInit(void);
+void bsp_InputInit(void);
 
 /* === End of conditional blocks =================================================================================== */
 
@@ -121,4 +121,4 @@ void BoardInputInit(void);
 }
 #endif
 
-#endif /* BOARD.H */
+#endif /* BSP.H */
