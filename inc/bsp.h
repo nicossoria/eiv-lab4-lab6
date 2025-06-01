@@ -97,23 +97,26 @@ extern "C" {
 #define TEC_4_BIT  9
 /* === Public data type declarations =============================================================================== */
 
+typedef struct board_s{
+    digital_output_t led_blue;
+    digital_output_t led_yellow;
+    digital_output_t led_red;
+    digital_output_t led_green;
+    digital_input_t tec_push;
+    digital_input_t tec_toggle;
+    digital_input_t tec_turn_on;
+    digital_input_t tec_turn_off;
+} const * const board_t;
+
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
 
-
 /**
- * @brief Funcion para inicializar las salidas digitales
- * 
-*/
-void bsp_OutputInit(void);
-
-
-/**
- * @brief Funcion para inicializar las entradas digitales
- * 
-*/
-void bsp_InputInit(void);
+ * @brief Crea una estructura de tipo board_t que representa la placa de desarrollo.
+ * @return Un puntero a la estructura board_t creada.
+ */
+board_t BoardCreate(void);
 
 /* === End of conditional blocks =================================================================================== */
 

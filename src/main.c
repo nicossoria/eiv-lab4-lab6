@@ -63,52 +63,30 @@
 int main(void) {
 
     int divisor = 0;
-
-    bsp_OutputInit();
-    bsp_InputInit();
-
-    digital_output_t led_RGB_blue = DigitalOutputCreate(LED_B_GPIO, LED_B_BIT);
-
-    /******************/
-
-    digital_output_t led_red = DigitalOutputCreate(LED_1_GPIO, LED_1_BIT);
-
-    digital_output_t led_yellow = DigitalOutputCreate(LED_2_GPIO, LED_2_BIT);
-
-    digital_output_t led_green = DigitalOutputCreate(LED_3_GPIO, LED_3_BIT);
-
-    /******************/
-
-    digital_input_t tec_push = DigitalInputCreate(TEC_1_GPIO, TEC_1_BIT, true);
-
-    digital_input_t tec_toggle = DigitalInputCreate(TEC_2_GPIO, TEC_2_BIT, true);
-
-    digital_input_t tec_turn_on = DigitalInputCreate(TEC_3_GPIO, TEC_3_BIT, true);
-
-    digital_input_t tec_turn_off = DigitalInputCreate(TEC_4_GPIO, TEC_4_BIT, true);
+    board_t board = BoardCreate();
 
     while (true) {
-        if (DigitalInputGetIsActive(tec_push)) {
-            DigitalOutputActivate(led_RGB_blue);
+        if (DigitalInputGetIsActive(board->tec_push)) {
+            DigitalOutputActivate(board->led_blue);
         } else {
-            DigitalOutputDeactivate(led_RGB_blue);
+            DigitalOutputDeactivate(board->led_blue);
         }
 
-        if (DigitalWasActive(tec_toggle)) {
-            DigitalOutputToggle(led_red);
+        if (DigitalWasActive(board->tec_toggle)) {
+            DigitalOutputToggle(board->led_red);
         }
 
-        if (DigitalInputGetIsActive(tec_turn_on)) {
-            DigitalOutputActivate(led_yellow);
+        if (DigitalInputGetIsActive(board->tec_turn_on)) {
+            DigitalOutputActivate(board->led_yellow);
         }
-        if (DigitalInputGetIsActive(tec_turn_off)) {
-            DigitalOutputDeactivate(led_yellow);
+        if (DigitalInputGetIsActive(board->tec_turn_off)) {
+            DigitalOutputDeactivate(board->led_yellow);
         }
 
         divisor++;
         if (divisor == 5) {
             divisor = 0;
-            DigitalOutputToggle(led_green);
+            DigitalOutputToggle(board->led_green);
         }
 
         for (int index = 0; index < 100; index++) {
