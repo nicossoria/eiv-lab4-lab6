@@ -60,42 +60,7 @@
 /* === Public function implementation ========================================================= */
 
 int main(void) {
-    /*
-
-    int divisor = 0;
-    board_t board = BoardCreate();
-
-    while (true) {
-        if (DigitalInputGetIsActive(board->tec_push)) {
-            DigitalOutputActivate(board->led_blue);
-        } else {
-            DigitalOutputDeactivate(board->led_blue);
-        }
-
-        if (DigitalWasActive(board->tec_toggle)) {
-            DigitalOutputToggle(board->led_red);
-        }
-
-        if (DigitalInputGetIsActive(board->tec_turn_on)) {
-            DigitalOutputActivate(board->led_yellow);
-        }
-        if (DigitalInputGetIsActive(board->tec_turn_off)) {
-            DigitalOutputDeactivate(board->led_yellow);
-        }
-
-        divisor++;
-        if (divisor == 5) {
-            divisor = 0;
-            DigitalOutputToggle(board->led_green);
-        }
-
-        for (int index = 0; index < 100; index++) {
-            for (int delay = 0; delay < 25000; delay++) {
-                __asm("NOP");
-            }
-        }
-    }
-        */
+    
 }
 
 /* === End of documentation ==================================================================== */

@@ -30,11 +30,9 @@ SPDX-License-Identifier: MIT
 
 /* === Macros definitions ========================================================================================== */
 
-#ifndef SCREEn_MAX_DIGITS
-#define SCREEn_MAX_DIGITS 8
+#ifndef SCREEN_MAX_DIGITS
+#define SCREEN_MAX_DIGITS 8
 #endif
-
-
 
 /* === Private data type declarations ============================================================================== */
 
@@ -42,22 +40,22 @@ struct screen_s {
     uint8_t digits;
     uint8_t current_digit;
     screen_driver_t driver;
-    uint8_t value[SCREEn_MAX_DIGITS];
+    uint8_t value[SCREEN_MAX_DIGITS];
 };
 
 /* === Private function declarations =============================================================================== */
 
 static const uint8_t IMAGES[10] = {
-    SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F, // 0
-    SEGMENT_B | SEGMENT_C, // 1
-    SEGMENT_A | SEGMENT_B | SEGMENT_D | SEGMENT_E | SEGMENT_G, // 2
-    SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_G, // 3
-    SEGMENT_B | SEGMENT_C | SEGMENT_F | SEGMENT_G, // 4
-    SEGMENT_A | SEGMENT_C | SEGMENT_D | SEGMENT_F | SEGMENT_G, // 5
-    SEGMENT_A | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G, // 6
-    SEGMENT_A | SEGMENT_B | SEGMENT_C, // 7
+    SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F,             // 0
+    SEGMENT_B | SEGMENT_C,                                                             // 1
+    SEGMENT_A | SEGMENT_B | SEGMENT_D | SEGMENT_E | SEGMENT_G,                         // 2
+    SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_G,                         // 3
+    SEGMENT_B | SEGMENT_C | SEGMENT_F | SEGMENT_G,                                     // 4
+    SEGMENT_A | SEGMENT_C | SEGMENT_D | SEGMENT_F | SEGMENT_G,                         // 5
+    SEGMENT_A | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G,             // 6
+    SEGMENT_A | SEGMENT_B | SEGMENT_C,                                                 // 7
     SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_E | SEGMENT_F | SEGMENT_G, // 8
-    SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_F | SEGMENT_G // 9
+    SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_F | SEGMENT_G              // 9
 };
 
 void DigitsInit(void);
@@ -68,22 +66,22 @@ void SegmentsInit(void);
 
 /* === Public function definitions ============================================================================== */
 
-screen_t ScreenCreate(uint8_t digits, screen_driver_t *driver){
-    
+screen_t ScreenCreate(uint8_t digits, screen_driver_t * driver) {
+
     screen_t self = malloc(sizeof(struct screen_s));
-    if (digits > SCREEn_MAX_DIGITS){
-        digits = SCREEn_MAX_DIGITS;
+    if (digits > SCREEN_MAX_DIGITS) {
+        digits = SCREEN_MAX_DIGITS;
     }
-    if(self != NULL){
+    if (self != NULL) {
         self->digits = digits;
-        self->driver = driver;
+        self->driver = *driver;
         self->current_digit = 0;
     }
     return self;
 }
 
-void ScreenWriteBCD(screen_t self, uint8_t value[], uint8_t size){
-    menset(self->value, 0, sizeof(self->value));
+void ScreenWriteBCD(screen_t self, uint8_t value[], uint8_t size) {
+    memset(self->value, 0, sizeof(self->value));
 
     if (size > self->digits) {
         size = self->digits;
@@ -93,13 +91,12 @@ void ScreenWriteBCD(screen_t self, uint8_t value[], uint8_t size){
     }
 }
 
-void Screenfresh(screen_t self){
+void Screenfresh(screen_t self) {
     self->driver->DigitsTurnOff();
     self->current_digit = (self->current_digit + 1) % self->digits;
     self->driver->SegmentsUpdate(self->value[self->current_digit]);
     self->driver->DigitTurnOn(self->current_digit);
 }
 /* === Private function definitions ================================================================================ */
-
 
 /* === End of documentation ======================================================================================== */

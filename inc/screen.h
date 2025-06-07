@@ -54,7 +54,7 @@ typedef struct screen_s * screen_t;
 
 typedef void (*digits_turn_of_t)(void);
 
-typedef void (*digits_update_t)(void);
+typedef void (*digits_update_t)(uint8_t);
 
 typedef void (*digit_turn_on_t)(uint8_t);
 
