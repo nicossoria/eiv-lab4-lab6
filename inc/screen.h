@@ -1,5 +1,5 @@
 /*********************************************************************************************************************
-Copyright (c) 2025, Soria Martin Nicolas <soria.m.nicolas@gmail.com>
+Copyright (c) 2025, Martin Nicolas Soria <soria.m.nicolas@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -17,20 +17,17 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 *********************************************************************************************************************/
 
-#ifndef BSP_H_
-#define BSP_H_
+#ifndef SCREEN_H_
+#define SCREEN_H_
 
-/** @file bsp.h
- ** @brief Definiciones de los pines de la placa de desarrollo
+/** @file screen.h
+ ** @brief Declaraciones del modulo para la gestion de una pantalla de 7 segmentos
  **/
 
 /* === Headers files inclusions ==================================================================================== */
+
 #include <stdint.h>
 #include <stdbool.h>
-#include "poncho.h"
-#include "chip.h"
-#include "digital.h"
-#include "screen.h"
 
 /* === Header for C++ compatibility ================================================================================ */
 
@@ -40,90 +37,45 @@ extern "C" {
 
 /* === Public macros definitions =================================================================================== */
 
-#define LED_R_PORT 2
-#define LED_R_PIN  0
-#define LED_R_FUNC SCU_MODE_FUNC4
-#define LED_R_GPIO 5
-#define LED_R_BIT  0
-
-#define LED_G_PORT 2
-#define LED_G_PIN  1
-#define LED_G_FUNC SCU_MODE_FUNC4
-#define LED_G_GPIO 5
-#define LED_G_BIT  1
-
-#define LED_B_PORT 2
-#define LED_B_PIN  2
-#define LED_B_FUNC SCU_MODE_FUNC4
-#define LED_B_GPIO 5
-#define LED_B_BIT  2
-
-#define LED_1_PORT 2
-#define LED_1_PIN  10
-#define LED_1_FUNC SCU_MODE_FUNC0
-#define LED_1_GPIO 0
-#define LED_1_BIT  14
-
-#define LED_2_PORT 2
-#define LED_2_PIN  11
-#define LED_2_FUNC SCU_MODE_FUNC0
-#define LED_2_GPIO 1
-#define LED_2_BIT  11
-
-#define LED_3_PORT 2
-#define LED_3_PIN  12
-#define LED_3_FUNC SCU_MODE_FUNC0
-#define LED_3_GPIO 1
-#define LED_3_BIT  12
-
-#define TEC_1_PORT 1
-#define TEC_1_PIN  0
-#define TEC_1_FUNC SCU_MODE_FUNC0
-#define TEC_1_GPIO 0
-#define TEC_1_BIT  4
-
-#define TEC_2_PORT 1
-#define TEC_2_PIN  1
-#define TEC_2_FUNC SCU_MODE_FUNC0
-#define TEC_2_GPIO 0
-#define TEC_2_BIT  8
-
-#define TEC_3_PORT 1
-#define TEC_3_PIN  2
-#define TEC_3_FUNC SCU_MODE_FUNC0
-#define TEC_3_GPIO 0
-#define TEC_3_BIT  9
-
-#define TEC_4_PORT 1
-#define TEC_4_PIN  6
-#define TEC_4_FUNC SCU_MODE_FUNC0
-#define TEC_4_GPIO 1
-#define TEC_4_BIT  9
+#define SEGMENT_A (1 << 0)
+#define SEGMENT_B (1 << 1)
+#define SEGMENT_C (1 << 2)
+#define SEGMENT_D (1 << 3)
+#define SEGMENT_E (1 << 4)
+#define SEGMENT_F (1 << 5)
+#define SEGMENT_G (1 << 6)
+#define SEGMENT_P (1 << 7)
 
 
 
 /* === Public data type declarations =============================================================================== */
 
-typedef struct board_s{
-    digital_output_t buzzer; //!< Salida digital para el zumbador
-    digital_input_t set_time; //!< Entrada digital para establecer la hora
-    digital_input_t set_alarm; //!< Entrada digital para establecer la alarma
-    digital_input_t decrement;
-    digital_input_t increment;
-    digital_input_t accept;
-    digital_input_t cancel;
-    screen_t scren;
-} const * const board_t;
+typedef struct screen_s * screen_t;
+
+typedef void (*digits_turn_of_t)(void);
+
+typedef void (*digits_update_t)(void);
+
+typedef void (*digit_turn_on_t)(uint8_t);
+
+typedef struct screen_driver_s {
+    digits_turn_of_t DigitsTurnOff;
+    digits_update_t SegmentsUpdate;
+    digit_turn_on_t DigitTurnOn;
+} const * screen_driver_t;
 
 /* === Public variable declarations ================================================================================ */
 
 /* === Public function declarations ================================================================================ */
 
-/**
- * @brief Crea una estructura de tipo board_t que representa la placa de desarrollo.
- * @return Un puntero a la estructura board_t creada.
- */
-board_t BoardCreate(void);
+screen_t ScreenCreate(uint8_t digits, screen_driver_t *driver);
+
+void ScreenWriteBCD(screen_t screen, uint8_t value[], uint8_t size);
+
+void Screenfresh(screen_t screen);
+
+
+
 
 /* === End of conditional blocks =================================================================================== */
 
@@ -131,4 +83,4 @@ board_t BoardCreate(void);
 }
 #endif
 
-#endif /* BSP.H */
+#endif /* SCREEN_H_ */

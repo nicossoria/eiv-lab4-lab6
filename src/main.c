@@ -39,8 +39,7 @@
  ** @{ */
 
 /* === Headers files inclusions =============================================================== */
-#include "digital.h"
-#include "chip.h"
+
 #include "bsp.h"
 #include <stdbool.h>
 
@@ -61,6 +60,7 @@
 /* === Public function implementation ========================================================= */
 
 int main(void) {
+    /*
 
     int divisor = 0;
     board_t board = BoardCreate();
@@ -95,6 +95,7 @@ int main(void) {
             }
         }
     }
+        */
 }
 
 /* === End of documentation ==================================================================== */

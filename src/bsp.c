@@ -23,79 +23,26 @@ SPDX-License-Identifier: MIT
 
 /* === Headers files inclusions ==================================================================================== */
 
-#include "chip.h"
-#include "digital.h"
 #include "bsp.h"
-#include <stdbool.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 /* === Macros definitions ========================================================================================== */
 
-#define LED_R_PORT 2
-#define LED_R_PIN  0
-#define LED_R_FUNC SCU_MODE_FUNC4
-#define LED_R_GPIO 5
-#define LED_R_BIT  0
-
-#define LED_G_PORT 2
-#define LED_G_PIN  1
-#define LED_G_FUNC SCU_MODE_FUNC4
-#define LED_G_GPIO 5
-#define LED_G_BIT  1
-
-#define LED_B_PORT 2
-#define LED_B_PIN  2
-#define LED_B_FUNC SCU_MODE_FUNC4
-#define LED_B_GPIO 5
-#define LED_B_BIT  2
-
-#define LED_1_PORT 2
-#define LED_1_PIN  10
-#define LED_1_FUNC SCU_MODE_FUNC0
-#define LED_1_GPIO 0
-#define LED_1_BIT  14
-
-#define LED_2_PORT 2
-#define LED_2_PIN  11
-#define LED_2_FUNC SCU_MODE_FUNC0
-#define LED_2_GPIO 1
-#define LED_2_BIT  11
-
-#define LED_3_PORT 2
-#define LED_3_PIN  12
-#define LED_3_FUNC SCU_MODE_FUNC0
-#define LED_3_GPIO 1
-#define LED_3_BIT  12
-
-#define TEC_1_PORT 1
-#define TEC_1_PIN  0
-#define TEC_1_FUNC SCU_MODE_FUNC0
-#define TEC_1_GPIO 0
-#define TEC_1_BIT  4
-
-#define TEC_2_PORT 1
-#define TEC_2_PIN  1
-#define TEC_2_FUNC SCU_MODE_FUNC0
-#define TEC_2_GPIO 0
-#define TEC_2_BIT  8
-
-#define TEC_3_PORT 1
-#define TEC_3_PIN  2
-#define TEC_3_FUNC SCU_MODE_FUNC0
-#define TEC_3_GPIO 0
-#define TEC_3_BIT  9
-
-#define TEC_4_PORT 1
-#define TEC_4_PIN  6
-#define TEC_4_FUNC SCU_MODE_FUNC0
-#define TEC_4_GPIO 1
-#define TEC_4_BIT  9
 /* === Private data type declarations ============================================================================== */
 
 /* === Private function declarations =============================================================================== */
+void DigitsTurnOff(void);
 
+void SegmentsUpdate(uint8_t value);
+
+void DigitTurnOn(uint8_t digit);
 /* === Private variable definitions ================================================================================ */
-
+static const struct screen_driver_s screen_driver = {
+    .DigitsTurnOff = DigitsTurnOff,
+    .SegmentsUpdate = SegmentsUpdate,
+    .DigitTurnOn = DigitTurnOn,
+};
 /* === Public variable definitions ================================================================================= */
 
 /* === Public function definitions ================================================================================= */
@@ -103,29 +50,9 @@ SPDX-License-Identifier: MIT
 board_t board_create(void){
     struct board_s *board = malloc(sizeof(struct board_s));
     if (board != NULL) {
-        Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
-        Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
-        Chip_SCU_PinMuxSet(LED_B_PORT, LED_B_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_B_FUNC);
-        Chip_SCU_PinMuxSet(LED_1_PORT, LED_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_1_FUNC);
-        Chip_SCU_PinMuxSet(LED_2_PORT, LED_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_2_FUNC);
-        Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
-
-
-        Chip_SCU_PinMuxSet(TEC_1_PORT, TEC_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_1_FUNC);
-        Chip_SCU_PinMuxSet(TEC_2_PORT, TEC_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_2_FUNC);
-        Chip_SCU_PinMuxSet(TEC_3_PORT, TEC_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_3_FUNC);
-        Chip_SCU_PinMuxSet(TEC_4_PORT, TEC_4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | TEC_4_FUNC);
-    
-
-
-        board->led_blue = DigitalOutputCreate(LED_B_GPIO, LED_B_BIT);
-        board->led_yellow = DigitalOutputCreate(LED_1_GPIO, LED_1_BIT);
-        board->led_red = DigitalOutputCreate(LED_2_GPIO, LED_2_BIT);
-        board->led_green = DigitalOutputCreate(LED_3_GPIO, LED_3_BIT);
-        board->tec_push = DigitalInputCreate(TEC_1_GPIO, TEC_1_BIT, true);
-        board->tec_toggle = DigitalInputCreate(TEC_2_GPIO, TEC_2_BIT, true);
-        board->tec_turn_on = DigitalInputCreate(TEC_3_GPIO, TEC_3_BIT, true);
-        board->tec_turn_off = DigitalInputCreate(TEC_4_GPIO, TEC_4_BIT, true);
+        DigitsInit();
+        SegmentsInit();
+        board->scren = ScreenCreate(4, &screen_driver);
     }
     return board;
 }
@@ -133,4 +60,66 @@ board_t board_create(void){
 
 /* === Private function definitions ================================================================================ */
 
+void DigitsInit(void){
+    Chip_SCU_PinMuxSet(DIGIT_1_PORT, DIGIT_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_1_FUNC);
+    Chip_GPIO_SetPinState8(LPC_GPIO_PORT, DIGIT_1_GPIO, DIGIT_1_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, DIGIT_1_GPIO, DIGIT_1_BIT, true);
+
+    Chip_SCU_PinMuxSet(DIGIT_2_PORT, DIGIT_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_2_FUNC);
+    Chip_GPIO_SetPinState8(LPC_GPIO_PORT, DIGIT_2_GPIO, DIGIT_2_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, DIGIT_2_GPIO, DIGIT_2_BIT, true);
+
+    Chip_SCU_PinMuxSet(DIGIT_3_PORT, DIGIT_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_3_FUNC);
+    Chip_GPIO_SetPinState8(LPC_GPIO_PORT, DIGIT_3_GPIO, DIGIT_3_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, DIGIT_3_GPIO, DIGIT_3_BIT, true);
+
+    Chip_SCU_PinMuxSet(DIGIT_4_PORT, DIGIT_4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_4_FUNC);
+    Chip_GPIO_SetPinState8(LPC_GPIO_PORT, DIGIT_4_GPIO, DIGIT_4_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, DIGIT_4_GPIO, DIGIT_4_BIT, true);
+}
+
+void SegmentsInit(void){
+    
+    Chip_SCU_PinMuxSet(SEGMENT_A_PORT, SEGMENT_A_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | SEGMENT_A_FUNC);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_A_GPIO, SEGMENT_A_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, SEGMENT_A_GPIO, SEGMENT_A_BIT, true);
+
+    Chip_SCU_PinMuxSet(SEGMENT_B_PORT, SEGMENT_B_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | SEGMENT_B_FUNC);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_B_GPIO, SEGMENT_B_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, SEGMENT_B_GPIO, SEGMENT_B_BIT, true);
+
+    Chip_SCU_PinMuxSet(SEGMENT_C_PORT, SEGMENT_C_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | SEGMENT_C_FUNC);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_C_GPIO, SEGMENT_C_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, SEGMENT_C_GPIO, SEGMENT_C_BIT, true);
+
+    Chip_SCU_PinMuxSet(SEGMENT_D_PORT, SEGMENT_D_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | SEGMENT_D_FUNC);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_D_GPIO, SEGMENT_D_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, SEGMENT_D_GPIO, SEGMENT_D_BIT, true);
+
+    Chip_SCU_PinMuxSet(SEGMENT_E_PORT, SEGMENT_E_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | SEGMENT_E_FUNC);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_E_GPIO, SEGMENT_E_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, SEGMENT_E_GPIO, SEGMENT_E_BIT, true);
+
+    Chip_SCU_PinMuxSet(SEGMENT_F_PORT, SEGMENT_F_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | SEGMENT_F_FUNC);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_F_GPIO, SEGMENT_F_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, SEGMENT_F_GPIO, SEGMENT_F_BIT, true);
+
+    Chip_SCU_PinMuxSet(SEGMENT_G_PORT, SEGMENT_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | SEGMENT_G_FUNC);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_G_GPIO, SEGMENT_G_BIT, false);
+    Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, SEGMENT_G_GPIO, SEGMENT_G_BIT, true);
+}
+
+void DigitsTurnOff(void) {
+    Chip_GPIO_ClearValue(LPC_GPIO_PORT, DIGITS_GPIO, DIGITS_MASK);
+    Chip_GPIO_ClearValue(LPC_GPIO_PORT, SEGMENTS_GPIO, SEGMENTS_MASK);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENTS_GPIO, SEGMENT_P_BIT, false);
+}
+void SegmentsUpdate(uint8_t value){
+    Chip_GPIO_SetValue(LPC_GPIO_PORT, SEGMENTS_GPIO, (value & SEGMENTS_MASK));
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENTS_GPIO, SEGMENT_P_BIT, (value & SEGMENT_P));
+}
+
+void DigitTurnOn(uint8_t digit){
+    Chip_GPIO_SetValue(LPC_GPIO_PORT, DIGITS_GPIO, (1 << (3 - digit)) & DIGITS_MASK);
+}
 /* === End of documentation ======================================================================================== */
