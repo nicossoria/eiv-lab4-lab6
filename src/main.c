@@ -60,9 +60,19 @@
 /* === Public function implementation ========================================================= */
 
 int main(void) {
-    
-}
+    board_t board = board_create();
 
+    uint8_t value[4] = {1, 2, 3, 4};
+    ScreenWriteBCD(board->screen, value, 4);
+
+    while (true) {
+        Screenfresh(board->screen);
+
+        for (int delay = 0; delay < 25000; delay++) {
+            __asm("NOP");
+        }
+    }
+}
 /* === End of documentation ==================================================================== */
 
 /** @} End of module definition for doxygen */

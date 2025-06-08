@@ -66,7 +66,7 @@ void SegmentsInit(void);
 
 /* === Public function definitions ============================================================================== */
 
-screen_t ScreenCreate(uint8_t digits, screen_driver_t * driver) {
+screen_t ScreenCreate(uint8_t digits, screen_driver_t driver) {
 
     screen_t self = malloc(sizeof(struct screen_s));
     if (digits > SCREEN_MAX_DIGITS) {
@@ -74,7 +74,7 @@ screen_t ScreenCreate(uint8_t digits, screen_driver_t * driver) {
     }
     if (self != NULL) {
         self->digits = digits;
-        self->driver = *driver;
+        self->driver = driver;
         self->current_digit = 0;
     }
     return self;

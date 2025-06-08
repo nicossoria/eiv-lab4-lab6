@@ -100,19 +100,17 @@ extern "C" {
 #define TEC_4_GPIO 1
 #define TEC_4_BIT  9
 
-
-
 /* === Public data type declarations =============================================================================== */
 
-typedef struct board_s{
-    digital_output_t buzzer; //!< Salida digital para el zumbador
-    digital_input_t set_time; //!< Entrada digital para establecer la hora
+typedef struct board_s {
+    digital_output_t buzzer;   //!< Salida digital para el zumbador
+    digital_input_t set_time;  //!< Entrada digital para establecer la hora
     digital_input_t set_alarm; //!< Entrada digital para establecer la alarma
     digital_input_t decrement;
     digital_input_t increment;
     digital_input_t accept;
     digital_input_t cancel;
-    screen_t scren;
+    screen_t screen;
 } const * const board_t;
 
 /* === Public variable declarations ================================================================================ */
@@ -123,7 +121,8 @@ typedef struct board_s{
  * @brief Crea una estructura de tipo board_t que representa la placa de desarrollo.
  * @return Un puntero a la estructura board_t creada.
  */
-board_t BoardCreate(void);
+board_t board_create(void);
+
 
 /* === End of conditional blocks =================================================================================== */
 

@@ -68,7 +68,7 @@ typedef struct screen_driver_s {
 
 /* === Public function declarations ================================================================================ */
 
-screen_t ScreenCreate(uint8_t digits, screen_driver_t *driver);
+screen_t ScreenCreate(uint8_t digits, screen_driver_t driver);
 
 void ScreenWriteBCD(screen_t screen, uint8_t value[], uint8_t size);
 
