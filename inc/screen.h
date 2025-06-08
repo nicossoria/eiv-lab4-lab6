@@ -72,10 +72,9 @@ screen_t ScreenCreate(uint8_t digits, screen_driver_t driver);
 
 void ScreenWriteBCD(screen_t screen, uint8_t value[], uint8_t size);
 
-void Screenfresh(screen_t screen);
+void ScreenRefresh(screen_t screen);
 
-
-
+int DisplayFlashDigit(screen_t self, uint8_t from, uint8_t to, uint8_t divisor);
 
 /* === End of conditional blocks =================================================================================== */
 

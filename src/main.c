@@ -60,19 +60,20 @@
 /* === Public function implementation ========================================================= */
 
 int main(void) {
+    uint8_t value[4] = {1, 2, 3, 4};
     board_t board = board_create();
 
-    uint8_t value[4] = {1, 2, 3, 4};
     ScreenWriteBCD(board->screen, value, 4);
+    DisplayFlashDigit(board->screen, 1, 2, 100); // Parpadea dígitos 1 y 2
 
     while (true) {
-        Screenfresh(board->screen);
-
-        for (int delay = 0; delay < 25000; delay++) {
+        ScreenRefresh(board->screen);
+        for (int i = 0; i < 10000; i++) {
             __asm("NOP");
         }
     }
 }
+
 /* === End of documentation ==================================================================== */
 
 /** @} End of module definition for doxygen */

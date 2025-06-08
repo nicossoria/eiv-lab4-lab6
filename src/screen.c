@@ -39,6 +39,10 @@ SPDX-License-Identifier: MIT
 struct screen_s {
     uint8_t digits;
     uint8_t current_digit;
+    uint8_t flashing_from;
+    uint8_t flashing_to;
+    uint16_t flashing_frecuency;
+    uint8_t flashing_count;
     screen_driver_t driver;
     uint8_t value[SCREEN_MAX_DIGITS];
 };
@@ -76,6 +80,8 @@ screen_t ScreenCreate(uint8_t digits, screen_driver_t driver) {
         self->digits = digits;
         self->driver = driver;
         self->current_digit = 0;
+        self->flashing_count = 0;
+        self->flashing_frecuency = 0;
     }
     return self;
 }
@@ -91,11 +97,42 @@ void ScreenWriteBCD(screen_t self, uint8_t value[], uint8_t size) {
     }
 }
 
-void Screenfresh(screen_t self) {
+void ScreenRefresh(screen_t self) {
+    uint8_t segments;
+
     self->driver->DigitsTurnOff();
     self->current_digit = (self->current_digit + 1) % self->digits;
-    self->driver->SegmentsUpdate(self->value[self->current_digit]);
+
+    segments = self->value[self->current_digit];
+    if (self->flashing_frecuency) {
+        if (self->current_digit == 0) {
+            self->flashing_count = self->flashing_count % (self->flashing_frecuency);
+        }
+        if (self->flashing_count < (self->flashing_frecuency / 2)) {
+            segments = 0;
+        }
+        self->flashing_count++;
+    }
+
+    self->driver->SegmentsUpdate(segments);
     self->driver->DigitTurnOn(self->current_digit);
+}
+
+int DisplayFlashDigit(screen_t self, uint8_t from, uint8_t to, uint8_t divisor) {
+    int result = 0;
+    if (from > to || (from >= SCREEN_MAX_DIGITS) || (to >= SCREEN_MAX_DIGITS)) {
+        result = -1;
+    } else if (!self) {
+        result = -1;
+    } else {
+        if (self) {
+            self->flashing_from = from;
+            self->flashing_to = to;
+            self->flashing_frecuency = 2 * divisor;
+            self->flashing_count = 0;
+        }
+    }
+    return result;
 }
 /* === Private function definitions ================================================================================ */
 
