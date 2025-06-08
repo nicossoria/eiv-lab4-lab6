@@ -76,6 +76,12 @@ void ScreenRefresh(screen_t screen);
 
 int DisplayFlashDigit(screen_t self, uint8_t from, uint8_t to, uint8_t divisor);
 
+void ScreenEnablePoint(screen_t self, uint8_t digit);
+
+void ScreenDisablePoint(screen_t self, uint8_t digit);
+
+int DisplayFlashPoints(screen_t self, uint8_t from, uint8_t to, uint8_t divisor);
+
 /* === End of conditional blocks =================================================================================== */
 
 #ifdef __cplusplus

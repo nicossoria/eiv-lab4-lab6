@@ -42,7 +42,7 @@
 
 #include "bsp.h"
 #include <stdbool.h>
-
+#include <stdint.h>
 /* === Macros definitions ====================================================================== */
 
 /* === Private data type declarations ========================================================== */
@@ -59,12 +59,26 @@
 
 /* === Public function implementation ========================================================= */
 
+
 int main(void) {
-    uint8_t value[4] = {0, 0, 2, 0};
     board_t board = board_create();
 
+    uint8_t value[4] = {1, 2, 3, 4};
     ScreenWriteBCD(board->screen, value, 4);
-    DisplayFlashDigit(board->screen, 2, 2, 150); // Parpadea dígitos 1 y 2
+
+    // Que los dígitos 0 y 1 parpadeen
+    DisplayFlashDigit(board->screen, 0, 1, 150);
+
+    // Punto del dígito 0 encendido fijo
+    ScreenEnablePoint(board->screen, 0);
+
+    // Punto del dígito 1 apagado fijo (opcional porque es default false)
+    ScreenDisablePoint(board->screen, 1);
+
+    // Puntos de dígitos 2 y 3 parpadean
+    ScreenEnablePoint(board->screen, 2);
+    ScreenEnablePoint(board->screen, 3);
+    DisplayFlashPoints(board->screen, 2, 3, 150);
 
     while (true) {
         ScreenRefresh(board->screen);

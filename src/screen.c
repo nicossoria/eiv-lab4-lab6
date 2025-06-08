@@ -39,12 +39,21 @@ SPDX-License-Identifier: MIT
 struct screen_s {
     uint8_t digits;
     uint8_t current_digit;
+
     uint8_t flashing_from;
     uint8_t flashing_to;
     uint16_t flashing_frecuency;
     uint8_t flashing_count;
+
+    uint8_t point_flash_from;
+    uint8_t point_flash_to;
+    uint8_t point_flash_frecuency;
+    uint8_t point_flash_count;
+
     screen_driver_t driver;
+
     uint8_t value[SCREEN_MAX_DIGITS];
+    bool point_enabled[SCREEN_MAX_DIGITS]; // Encendido fijo de puntos
 };
 
 /* === Private function declarations =============================================================================== */
@@ -82,6 +91,8 @@ screen_t ScreenCreate(uint8_t digits, screen_driver_t driver) {
         self->current_digit = 0;
         self->flashing_count = 0;
         self->flashing_frecuency = 0;
+        self->point_flash_count = 0;
+        self->point_flash_frecuency = 0;
     }
     return self;
 }
@@ -104,16 +115,33 @@ void ScreenRefresh(screen_t self) {
     self->current_digit = (self->current_digit + 1) % self->digits;
 
     segments = self->value[self->current_digit];
-    if (self->flashing_frecuency) {
-        if (self->current_digit == 0) {
-            self->flashing_count = (self->flashing_count + 1) % (self->flashing_frecuency);
+
+    if (self->current_digit == 0) {
+        if (self->flashing_frecuency) {
+            self->flashing_count = (self->flashing_count + 1) % self->flashing_frecuency;
         }
+        if (self->point_flash_frecuency) {
+            self->point_flash_count = (self->point_flash_count + 1) % self->point_flash_frecuency;
+        }
+    }
+
+    if (self->flashing_frecuency) {
         if (self->flashing_count < (self->flashing_frecuency / 2)) {
-            if ((self->current_digit >= self->flashing_from)&&(self->current_digit<=self->flashing_to))
-            {
+            if ((self->current_digit >= self->flashing_from) && (self->current_digit <= self->flashing_to)) {
                 segments = 0;
             }
-            
+        }
+    }
+
+    if (self->point_enabled[self->current_digit]) {
+        segments |= SEGMENT_P;
+    }
+
+    if (self->point_flash_frecuency) {
+        if (self->point_flash_count < (self->point_flash_frecuency / 2)) {
+            if ((self->current_digit >= self->point_flash_from) && (self->current_digit <= self->point_flash_to)) {
+                segments &= ~SEGMENT_P;
+            }
         }
     }
 
@@ -133,6 +161,35 @@ int DisplayFlashDigit(screen_t self, uint8_t from, uint8_t to, uint8_t divisor) 
             self->flashing_to = to;
             self->flashing_frecuency = 2 * divisor;
             self->flashing_count = 0;
+        }
+    }
+    return result;
+}
+
+void ScreenEnablePoint(screen_t self, uint8_t digit) {
+    if (self && digit < self->digits) {
+        self->point_enabled[digit] = true;
+    }
+}
+
+void ScreenDisablePoint(screen_t self, uint8_t digit) {
+    if (self && digit < self->digits) {
+        self->point_enabled[digit] = false;
+    }
+}
+
+int DisplayFlashPoints(screen_t self, uint8_t from, uint8_t to, uint8_t divisor) {
+    int result = 0;
+    if (from > to || (from >= SCREEN_MAX_DIGITS) || (to >= SCREEN_MAX_DIGITS)) {
+        result = -1;
+    } else if (!self) {
+        result = -1;
+    } else {
+        if (self) {
+            self->point_flash_from = from;
+            self->point_flash_to = to;
+            self->point_flash_frecuency = 2 * divisor;
+            self->point_flash_count = 0;
         }
     }
     return result;
