@@ -106,12 +106,15 @@ void ScreenRefresh(screen_t self) {
     segments = self->value[self->current_digit];
     if (self->flashing_frecuency) {
         if (self->current_digit == 0) {
-            self->flashing_count = self->flashing_count % (self->flashing_frecuency);
+            self->flashing_count = (self->flashing_count + 1) % (self->flashing_frecuency);
         }
         if (self->flashing_count < (self->flashing_frecuency / 2)) {
-            segments = 0;
+            if ((self->current_digit >= self->flashing_from)&&(self->current_digit<=self->flashing_to))
+            {
+                segments = 0;
+            }
+            
         }
-        self->flashing_count++;
     }
 
     self->driver->SegmentsUpdate(segments);

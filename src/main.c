@@ -60,11 +60,11 @@
 /* === Public function implementation ========================================================= */
 
 int main(void) {
-    uint8_t value[4] = {1, 2, 3, 4};
+    uint8_t value[4] = {0, 0, 2, 0};
     board_t board = board_create();
 
     ScreenWriteBCD(board->screen, value, 4);
-    DisplayFlashDigit(board->screen, 1, 2, 100); // Parpadea dígitos 1 y 2
+    DisplayFlashDigit(board->screen, 2, 2, 150); // Parpadea dígitos 1 y 2
 
     while (true) {
         ScreenRefresh(board->screen);
