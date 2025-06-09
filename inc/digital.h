@@ -39,18 +39,20 @@ extern "C" {
 
 /* === Public data type declarations =============================================================================== */
 
-//! Estructura que representa los camnbos de una entrada digital
+/** @brief Estructura para una salida digital */
+typedef struct digital_output_s * digital_output_t;
+
+/** @brief Estructura para una entrada digital */
+typedef struct digital_input_s * digital_input_t;
+
+/**
+ * @brief Estados de cambio para una entrada digital
+ */
 typedef enum digital_states_e {
     DIGITAL_INPUT_WAS_DEACTIVATED = -1,
     DIGITAL_INPUT_NO_CHANGE = 0,
     DIGITAL_INPUT_WAS_ACTIVATED = 1,
 } digital_states_t;
-
-//! puntero a una salida digital
-typedef struct digital_output_s * digital_output_t;
-
-//! puntero a una entrada digital
-typedef struct digital_input_s * digital_input_t;
 
 /* === Public variable declarations ================================================================================ */
 
@@ -95,7 +97,6 @@ void DigitalOutputToggle(digital_output_t self);
  */
 digital_input_t DigitalInputCreate(uint8_t gpio, uint8_t bit, bool inverted);
 
-
 /**
  * @brief Funcion para obtener el estado actual de una entrada digital
  *
@@ -103,7 +104,6 @@ digital_input_t DigitalInputCreate(uint8_t gpio, uint8_t bit, bool inverted);
  * @return bool Estado de la entrada digital
  */
 bool DigitalInputGetIsActive(digital_input_t input);
-
 
 /**
  * @brief Funcion para indicar si la entrada digital fue activada desde la ultima lectura
@@ -113,7 +113,6 @@ bool DigitalInputGetIsActive(digital_input_t input);
  */
 bool DigitalWasActive(digital_input_t input); // Opcion mas facil
 
-
 /**
  * @brief Funcion para indicar si la entrada digital fue desactivada desde la ultima lectura
  *
@@ -121,7 +120,6 @@ bool DigitalWasActive(digital_input_t input); // Opcion mas facil
  * @return bool Estado anterior de la entrada digital
  */
 bool DigitalWasInactive(digital_input_t input); // Opcion mas facil
-
 
 /**
  * @brief Funcion para indicar si la entrada digital cambio desde la ultima lectura

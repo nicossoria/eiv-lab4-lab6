@@ -49,15 +49,19 @@ extern "C" {
 
 
 /* === Public data type declarations =============================================================================== */
-
+/** @brief Estructura privada para el controlador de pantalla */
 typedef struct screen_s * screen_t;
 
+/** @brief Funcion para apagar todos los digitos */
 typedef void (*digits_turn_of_t)(void);
 
+/** @brief Funcion para actualizar los segmentos de un digito */
 typedef void (*digits_update_t)(uint8_t);
 
+/** @brief Funcion para encender un digito especifico */
 typedef void (*digit_turn_on_t)(uint8_t);
 
+/** @brief Driver para controlar la pantalla de 7 segmentos*/
 typedef struct screen_driver_s {
     digits_turn_of_t DigitsTurnOff;
     digits_update_t SegmentsUpdate;
@@ -68,18 +72,73 @@ typedef struct screen_driver_s {
 
 /* === Public function declarations ================================================================================ */
 
+/**
+ * @brief Crea una instancia de pantalla de 7 segmentos
+ * 
+ * @param digits Cantidad de dígitos a usar
+ * @param driver Driver con funciones para controlar los pines
+ * @return screen_t Puntero al objeto pantalla creado
+ */
 screen_t ScreenCreate(uint8_t digits, screen_driver_t driver);
 
+
+/**
+ * @brief Muestra un arreglo de dígitos BCD en la pantalla
+ *
+ * @param screen Pantalla a modificar
+ * @param value Arreglo de valores BCD
+ * @param size Cantidad de valores en el arreglo
+ */
 void ScreenWriteBCD(screen_t screen, uint8_t value[], uint8_t size);
 
+
+/**
+ * @brief Actualiza el estado visual de un dígito de la pantalla
+ *
+ * @param screen Pantalla a actualizar
+ */
 void ScreenRefresh(screen_t screen);
 
+
+/**
+ * @brief Hace parpadear un rango de dígitos de la pantalla
+ *
+ * @param self Instancia de pantalla
+ * @param from Dígito inicial
+ * @param to Dígito final
+ * @param divisor Controla la velocidad del parpadeo
+ * @return 0 si fue exitoso, -1 si hubo error
+ */
 int DisplayFlashDigit(screen_t self, uint8_t from, uint8_t to, uint8_t divisor);
 
+
+/**
+ * @brief Habilita el punto decimal de un dígito
+ * 
+ * @param self Instancia de pantalla
+ * @param digit Índice del dígito
+ */
 void ScreenEnablePoint(screen_t self, uint8_t digit);
 
+
+/**
+ * @brief Deshabilita el punto decimal de un dígito
+ * 
+ * @param self Instancia de pantalla
+ * @param digit Índice del dígito
+ */
 void ScreenDisablePoint(screen_t self, uint8_t digit);
 
+
+/**
+ * @brief Hace parpadear los puntos decimales de un rango de dígitos
+ * 
+ * @param self Instancia de pantalla
+ * @param from Índice inicial
+ * @param to Índice final
+ * @param divisor Controla la velocidad del parpadeo
+ * @return 0 si fue exitoso, -1 si hubo error
+ */
 int DisplayFlashPoints(screen_t self, uint8_t from, uint8_t to, uint8_t divisor);
 
 /* === End of conditional blocks =================================================================================== */

@@ -53,7 +53,7 @@ struct screen_s {
     screen_driver_t driver;
 
     uint8_t value[SCREEN_MAX_DIGITS];
-    bool point_enabled[SCREEN_MAX_DIGITS]; // Encendido fijo de puntos
+    bool point_enabled[SCREEN_MAX_DIGITS];
 };
 
 /* === Private function declarations =============================================================================== */
@@ -71,7 +71,15 @@ static const uint8_t IMAGES[10] = {
     SEGMENT_A | SEGMENT_B | SEGMENT_C | SEGMENT_D | SEGMENT_F | SEGMENT_G              // 9
 };
 
+
+/**
+ * @brief Inicializa los pines asociados a los dígitos de la pantalla
+ */
 void DigitsInit(void);
+
+/**
+ * @brief Inicializa los pines asociados a los segmentos de la pantalla
+ */
 void SegmentsInit(void);
 /* === Private variable definitions ================================================================================ */
 

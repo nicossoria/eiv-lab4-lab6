@@ -102,15 +102,20 @@ extern "C" {
 
 /* === Public data type declarations =============================================================================== */
 
+/**
+ * @brief Tipo que representa la placa base del sistema.
+ *
+ * No debe ser modificada directamente por el usuario.
+ */
 typedef struct board_s {
-    digital_output_t buzzer;   //!< Salida digital para el zumbador
-    digital_input_t set_time;  //!< Entrada digital para establecer la hora
-    digital_input_t set_alarm; //!< Entrada digital para establecer la alarma
-    digital_input_t decrement;
-    digital_input_t increment;
-    digital_input_t accept;
-    digital_input_t cancel;
-    screen_t screen;
+    digital_output_t buzzer;    /**< Zumbador de la placa */
+    digital_input_t set_time;   /**< Botón para configurar la hora */
+    digital_input_t set_alarm;  /**< Botón para configurar la alarma */
+    digital_input_t decrement;  /**< Botón para decrementar valores */
+    digital_input_t increment;  /**< Botón para incrementar valores */
+    digital_input_t accept;     /**< Botón para confirmar selección */
+    digital_input_t cancel;     /**< Botón para cancelar selección */
+    screen_t screen;            /**< Pantalla de 7 segmentos */
 } const * const board_t;
 
 /* === Public variable declarations ================================================================================ */
@@ -122,7 +127,6 @@ typedef struct board_s {
  * @return Un puntero a la estructura board_t creada.
  */
 board_t board_create(void);
-
 
 /* === End of conditional blocks =================================================================================== */
 

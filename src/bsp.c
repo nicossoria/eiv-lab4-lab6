@@ -32,15 +32,35 @@ SPDX-License-Identifier: MIT
 /* === Private data type declarations ============================================================================== */
 
 /* === Private function declarations =============================================================================== */
-void DigitsTurnOff(void);
 
-void SegmentsUpdate(uint8_t value);
-
-void DigitTurnOn(uint8_t digit);
-
+/**
+ * @brief Configura los pines SCU y GPIO de los dígitos
+ */
 void DigitsInit(void);
 
+/**
+ * @brief Configura los pines SCU y GPIO de los segmentos
+ */
 void SegmentsInit(void);
+
+/**
+ * @brief Apaga todos los dígitos y limpia los segmentos
+ */
+void DigitsTurnOff(void);
+
+/**
+ * @brief Activa los segmentos deseados
+ * @param value Máscara con los bits de segmentos a activar
+ */
+void SegmentsUpdate(uint8_t value);
+
+/**
+ * @brief Enciende un dígito en particular
+ * @param digit Índice del dígito a encender (0-3)
+ */
+void DigitTurnOn(uint8_t digit);
+
+
 /* === Private variable definitions ================================================================================ */
 static const struct screen_driver_s screen_driver = {
     .DigitsTurnOff = DigitsTurnOff,
