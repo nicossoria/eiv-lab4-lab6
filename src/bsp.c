@@ -44,6 +44,11 @@ void DigitsInit(void);
 void SegmentsInit(void);
 
 /**
+ * @brief Configura las teclas
+ */
+void KeysInit(void);
+
+/**
  * @brief Apaga todos los dígitos y limpia los segmentos
  */
 void DigitsTurnOff(void);
@@ -60,7 +65,6 @@ void SegmentsUpdate(uint8_t value);
  */
 void DigitTurnOn(uint8_t digit);
 
-
 /* === Private variable definitions ================================================================================ */
 static const struct screen_driver_s screen_driver = {
     .DigitsTurnOff = DigitsTurnOff,
@@ -76,7 +80,18 @@ board_t board_create(void) {
     if (board != NULL) {
         DigitsInit();
         SegmentsInit();
+        KeysInit();
+
         board->screen = ScreenCreate(4, &screen_driver);
+
+        board->set_time = DigitalInputCreate(KEY_F1_GPIO, KEY_F1_BIT, false);
+        board->set_alarm = DigitalInputCreate(KEY_F2_GPIO, KEY_F2_BIT, false);
+        board->decrement = DigitalInputCreate(KEY_F3_GPIO, KEY_F3_BIT, false);
+        board->increment = DigitalInputCreate(KEY_F4_GPIO, KEY_F4_BIT, false);
+        board->accept = DigitalInputCreate(KEY_ACCEPT_GPIO, KEY_ACCEPT_BIT, false);
+        board->cancel = DigitalInputCreate(KEY_CANCEL_GPIO, KEY_CANCEL_BIT, false);
+
+        // board->buzzer = DigitalOutputCreate(BUZZER_GPIO, BUZZER_BIT);
     }
     return board;
 }
@@ -134,6 +149,15 @@ void SegmentsInit(void) {
     Chip_SCU_PinMuxSet(SEGMENT_P_PORT, SEGMENT_P_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | SEGMENT_P_FUNC);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, false);
     Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, true);
+}
+
+void KeysInit(void) {
+    Chip_SCU_PinMuxSet(KEY_F1_PORT, KEY_F1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | KEY_F1_FUNC);
+    Chip_SCU_PinMuxSet(KEY_F2_PORT, KEY_F2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | KEY_F2_FUNC);
+    Chip_SCU_PinMuxSet(KEY_F3_PORT, KEY_F3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | KEY_F3_FUNC);
+    Chip_SCU_PinMuxSet(KEY_F4_PORT, KEY_F4_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | KEY_F4_FUNC);
+    Chip_SCU_PinMuxSet(KEY_ACCEPT_PORT, KEY_ACCEPT_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | KEY_ACCEPT_FUNC);
+    Chip_SCU_PinMuxSet(KEY_CANCEL_PORT, KEY_CANCEL_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | KEY_CANCEL_FUNC);
 }
 
 void DigitsTurnOff(void) {
