@@ -39,11 +39,20 @@ void ClockNewTick(clock_t self) {
             if (self->current_time.time.seconds[1] > 5) {
                 self->current_time.time.seconds[1] = 0;
                 self->current_time.time.minutes[0]++;
-                if (self->current_time.time.minutes[0] > 5) {
+                if (self->current_time.time.minutes[0] > 9) {
                     self->current_time.time.minutes[0] = 0;
                     self->current_time.time.minutes[1]++;
-                    if (self->current_time.time.minutes[1] > 9) {
+                    if (self->current_time.time.minutes[1] > 5) {
                         self->current_time.time.minutes[1] = 0;
+
+                        self->current_time.time.hours[0]++;
+                        if (self->current_time.time.hours[1] == 2 && self->current_time.time.hours[0] > 3) {
+                            self->current_time.time.hours[0] = 0;
+                            self->current_time.time.hours[1] = 0;
+                        } else if (self->current_time.time.hours[0] > 9) {
+                            self->current_time.time.hours[0] = 0;
+                            self->current_time.time.hours[1]++;
+                        }
                     }
                 }
             }

@@ -43,15 +43,19 @@ SPDX-License-Identifier: MIT
 clock_t clock;
 /* === Private function declarations =============================================================================== */
 static void SimulateSeconds(clock_t clock, uint8_t seconds);
-/* === Private variable definitions ================================================================================ */
+static void SimulateMinutes(clock_t clock, uint8_t minutes);
+static void SimulateHours(clock_t clock, uint8_t hours);
+/* === Private variable definitions ================================================================================
+ */
 
-/* === Public variable definitions ================================================================================= */
+/* === Public variable definitions =================================================================================
+ */
 
 /* === Public function definitions ============================================================================== */
 
 /**
-- , diez minutos, una hora, diez horas
-y un día completo.
+
+
 - Fijar la hora de la alarma y consultarla.
 - Fijar la alarma y avanzar el reloj para que suene.
 - Fijar la alarma, deshabilitarla y avanzar el reloj para no suene.
@@ -104,10 +108,46 @@ void test_clock_advance_one_minute(void) {
     SimulateSeconds(clock, 60);
     TEST_ASSERT_TIME(0, 0, 1, 0, 0, 0);
 }
+// Después de n ciclos de reloj la hora avanza diez minutos
+void test_clock_advance_ten_minutes(void) {
+    ClockSetTime(clock, &(clock_time_t){0});
+    SimulateMinutes(clock, 10);
+    TEST_ASSERT_TIME(0, 0, 0, 1, 0, 0);
+}
+
+// Después de n ciclos de reloj la hora avanza una hora
+void test_clock_advance_one_hour(void) {
+    ClockSetTime(clock, &(clock_time_t){0});
+    SimulateMinutes(clock, 60);
+    TEST_ASSERT_TIME(0, 0, 0, 0, 1, 0);
+}
+// Después de n ciclos de reloj la hora avanza diez horas
+void test_clock_advance_ten_hours(void) {
+    ClockSetTime(clock, &(clock_time_t){0});
+    SimulateHours(clock, 10);
+    TEST_ASSERT_TIME(0, 0, 0, 0, 0, 1);
+}
+
+// Después de n ciclos de reloj la hora avanza un día completo
+void test_clock_advance_one_day(void) {
+    ClockSetTime(clock, &(clock_time_t){0});
+    SimulateHours(clock, 24);
+    TEST_ASSERT_TIME(0, 0, 0, 0, 0, 0);
+}
 
 /* === Private function definitions ================================================================================ */
 static void SimulateSeconds(clock_t clock, uint8_t seconds) {
     for (uint16_t i = 0; i < CLOCK_TICKS_FOR_SECOND * seconds; i++) {
+        ClockNewTick(clock);
+    }
+}
+static void SimulateMinutes(clock_t clock, uint8_t minutes) {
+    for (uint16_t i = 0; i < CLOCK_TICKS_FOR_SECOND * 60 * minutes; i++) {
+        ClockNewTick(clock);
+    }
+}
+static void SimulateHours(clock_t clock, uint8_t hours) {
+    for (uint32_t i = 0; i < CLOCK_TICKS_FOR_SECOND * 60 * 60 * hours; i++) {
         ClockNewTick(clock);
     }
 }
