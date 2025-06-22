@@ -55,7 +55,6 @@ static void SimulateHours(clock_t clock, uint8_t hours);
 
 /**
 
-- Fijar la alarma y avanzar el reloj para que suene.
 - Fijar la alarma, deshabilitarla y avanzar el reloj para no suene.
 - Hacer sonar la alarma y posponerla.
 - Hacer sonar la alarma y cancelarla hasta el otro dia..
@@ -135,8 +134,22 @@ void test_clock_advance_one_day(void) {
 
 //- Fijar la hora de la alarma y consultarla.
 void test_set_alarm_and_get(void) {
-    static const clock_time_t alarma = {.time = {.seconds = {0, 0}, .minutes = {0, 3}, .hours = {8, 0}}};
-    TEST_ASSERT_TRUE(CLockSetAlarm(clock, &alarma));
+    static const clock_time_t alarm_time = {.time = {.seconds = {0, 0}, .minutes = {0, 3}, .hours = {8, 0}}};
+
+    TEST_ASSERT_TRUE(CLockSetAlarm(clock, &alarm_time));
+
+    clock_time_t alarm_read = {0};
+
+    TEST_ASSERT_TRUE_MESSAGE(ClockGetAlarm(clock, &alarm_read), "Error getting alarm time");
+}
+
+// Fijar la alarma y avanzar el reloj para que suene.
+void test_alarm_tiggers_when_is_time(void) {
+    static const clock_time_t alarm_time = {.time = {.seconds = {0, 0}, .minutes = {1, 0}, .hours = {8, 0}}};
+    TEST_ASSERT_TRUE(CLockSetAlarm(clock, &alarm_time));
+    ClockSetTime(clock, &(clock_time_t){.time = {.seconds = {0, 0}, .minutes = {0, 0}, .hours = {8, 0}}});
+    SimulateMinutes(clock, 1);
+    TEST_ASSERT_TRUE(ClockIsAlarmTriggered(clock));
 }
 
 /* === Private function definitions ================================================================================ */

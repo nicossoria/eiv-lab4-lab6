@@ -2,12 +2,12 @@
 #include <stdbool.h>
 
 typedef union {
-struct {
-    uint8_t seconds[2];
-    uint8_t minutes[2];
-    uint8_t hours[2];
-} time;
-uint8_t bcd[6];
+    struct {
+        uint8_t seconds[2];
+        uint8_t minutes[2];
+        uint8_t hours[2];
+    } time;
+    uint8_t bcd[6];
 } clock_time_t;
 
 typedef struct clock_s * clock_t;
@@ -16,30 +16,33 @@ clock_t ClockCreate(uint16_t tick_for_second);
 
 /**
  * @brief Obtiene la hora actual del reloj.
- * 
- * @param clock 
- * @param result 
- * @return true 
- * @return false 
+ *
+ * @param clock
+ * @param result
+ * @return true
+ * @return false
  */
-bool ClockGetTime(clock_t clock, clock_time_t *result);
-
+bool ClockGetTime(clock_t clock, clock_time_t * result);
 
 /**
  * @brief Establecer la hora del reloj.
- * 
- * @param clock 
- * @param new_time 
- * @return true 
- * @return false 
+ *
+ * @param clock
+ * @param new_time
+ * @return true
+ * @return false
  */
-bool ClockSetTime(clock_t clock, const clock_time_t *new_time);
+bool ClockSetTime(clock_t clock, const clock_time_t * new_time);
 
 /**
  * @brief Avanza el reloj un tick.
- * 
- * @param clock 
+ *
+ * @param clock
  */
 void ClockNewTick(clock_t clock);
 
-bool CLockSetAlarm(clock_t self, const clock_time_t *alarm);
+bool CLockSetAlarm(clock_t self, const clock_time_t * alarm_time);
+
+bool ClockGetAlarm(clock_t self, clock_time_t * alarm_time);
+
+bool ClockIsAlarmTriggered(clock_t self);
