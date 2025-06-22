@@ -14,3 +14,5 @@ typedef struct clock_s * clock_t;
 
 clock_t ClockCreate(void);
 bool ClockGetTime(clock_t clock, clock_time_t *result);
+
+bool ClockSetTime(clock_t clock, const clock_time_t *new_time);

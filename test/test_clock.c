@@ -38,8 +38,7 @@ SPDX-License-Identifier: MIT
 
 /* === Public function definitions ============================================================================== */
 /**
-- Al inicializar el reloj está en 00:00 y con hora invalida.
-- Al ajustar la hora el reloj queda en hora y es válida.
+
 - Después de n ciclos de reloj la hora avanza un segundo, diez segundos, un minutos, diez minutos, una hora, diez horas
 y un día completo.
 - Fijar la hora de la alarma y consultarla.
@@ -48,6 +47,7 @@ y un día completo.
 - Hacer sonar la alarma y posponerla.
 - Hacer sonar la alarma y cancelarla hasta el otro dia..
 - Probar get_time con NULL;
+- Tratar de  ajustar la hora el reloj con valores invalidos y verificar que los rechaza.
  */
 
 // Al inicializar el reloj está en 00:00 y con hora invalida.
@@ -57,6 +57,18 @@ void test_set_up_with_invalid_time(void) {
     clock_t clock = ClockCreate();
     TEST_ASSERT_FALSE(ClockGetTime(clock, &current_time));
     TEST_ASSERT_EACH_EQUAL_UINT8(0, current_time.bcd, 6);
+}
+
+// Al ajustar la hora el reloj con valores correctos, queda en hora y es válida.
+void test_set_up_and_adjust_with_valid_time(void) {
+    static const clock_time_t new_time = {.time = {.seconds = {4, 5}, .minutes = {3, 0}, .hours = {1, 4}}};
+    clock_time_t current_time = {0};
+
+    clock_t clock = ClockCreate();
+    TEST_ASSERT_TRUE(ClockSetTime(clock, &new_time));
+    TEST_ASSERT_TRUE(ClockGetTime(clock, &current_time));
+
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(new_time.bcd, current_time.bcd, 6);
 }
 
 /* === Private function definitions ================================================================================ */
