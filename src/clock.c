@@ -3,6 +3,7 @@
 #include <string.h>
 
 struct clock_s {
+    uint16_t clock_ticks;
     clock_time_t current_time;
     bool valid;
 };
@@ -27,5 +28,25 @@ bool ClockSetTime(clock_t self, const clock_time_t * new_time) {
 }
 
 void ClockNewTick(clock_t self) {
-    self->current_time.time.seconds[0] = 1;
+    self->clock_ticks++;
+    if (self->clock_ticks == 5) {
+        self->clock_ticks = 0;
+        self->current_time.time.seconds[0]++;
+        if (self->current_time.time.seconds[0] > 9) {
+            self->current_time.time.seconds[0] = 0;
+            self->current_time.time.seconds[1]++;
+
+            if (self->current_time.time.seconds[1] > 5) {
+                self->current_time.time.seconds[1] = 0;
+                self->current_time.time.minutes[0]++;
+                if (self->current_time.time.minutes[0] > 5) {
+                    self->current_time.time.minutes[0] = 0;
+                    self->current_time.time.minutes[1]++;
+                    if (self->current_time.time.minutes[1] > 9) {
+                        self->current_time.time.minutes[1] = 0;
+                    }
+                }
+            }
+        }
+    }
 }
