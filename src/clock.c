@@ -5,7 +5,9 @@
 struct clock_s {
     uint16_t clock_ticks;
     clock_time_t current_time;
+    clock_time_t alarm_time;
     bool valid;
+    bool alarm_enabled;
 };
 
 clock_t ClockCreate(uint16_t tick_for_second) {
@@ -58,4 +60,10 @@ void ClockNewTick(clock_t self) {
             }
         }
     }
+}
+
+bool CLockSetAlarm(clock_t self, const clock_time_t * alarm) {
+    memcpy(&self->alarm_time, alarm, sizeof(clock_time_t));
+    self->alarm_enabled = true;
+    return self->alarm_enabled;
 }

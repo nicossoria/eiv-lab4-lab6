@@ -13,8 +13,33 @@ uint8_t bcd[6];
 typedef struct clock_s * clock_t;
 
 clock_t ClockCreate(uint16_t tick_for_second);
+
+/**
+ * @brief Obtiene la hora actual del reloj.
+ * 
+ * @param clock 
+ * @param result 
+ * @return true 
+ * @return false 
+ */
 bool ClockGetTime(clock_t clock, clock_time_t *result);
 
+
+/**
+ * @brief Establecer la hora del reloj.
+ * 
+ * @param clock 
+ * @param new_time 
+ * @return true 
+ * @return false 
+ */
 bool ClockSetTime(clock_t clock, const clock_time_t *new_time);
 
+/**
+ * @brief Avanza el reloj un tick.
+ * 
+ * @param clock 
+ */
 void ClockNewTick(clock_t clock);
+
+bool CLockSetAlarm(clock_t self, const clock_time_t *alarm);

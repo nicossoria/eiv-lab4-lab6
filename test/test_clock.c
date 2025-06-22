@@ -55,8 +55,6 @@ static void SimulateHours(clock_t clock, uint8_t hours);
 
 /**
 
-
-- Fijar la hora de la alarma y consultarla.
 - Fijar la alarma y avanzar el reloj para que suene.
 - Fijar la alarma, deshabilitarla y avanzar el reloj para no suene.
 - Hacer sonar la alarma y posponerla.
@@ -133,6 +131,12 @@ void test_clock_advance_one_day(void) {
     ClockSetTime(clock, &(clock_time_t){0});
     SimulateHours(clock, 24);
     TEST_ASSERT_TIME(0, 0, 0, 0, 0, 0);
+}
+
+//- Fijar la hora de la alarma y consultarla.
+void test_set_alarm_and_get(void) {
+    static const clock_time_t alarma = {.time = {.seconds = {0, 0}, .minutes = {0, 3}, .hours = {8, 0}}};
+    TEST_ASSERT_TRUE(CLockSetAlarm(clock, &alarma));
 }
 
 /* === Private function definitions ================================================================================ */
