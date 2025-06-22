@@ -7,7 +7,8 @@ struct clock_s {
     bool valid;
 };
 
-clock_t ClockCreate(void) {
+clock_t ClockCreate(uint16_t tick_for_second) {
+    (void)tick_for_second;
     static struct clock_s self[1];
     memset(self, 0, sizeof(struct clock_s));
     self->valid = false;
@@ -15,7 +16,7 @@ clock_t ClockCreate(void) {
 }
 
 bool ClockGetTime(clock_t self, clock_time_t * result) {
-    memcpy(result,&self->current_time, sizeof(clock_time_t));
+    memcpy(result, &self->current_time, sizeof(clock_time_t));
     return self->valid;
 }
 
@@ -23,4 +24,8 @@ bool ClockSetTime(clock_t self, const clock_time_t * new_time) {
     self->valid = true;
     memcpy(&self->current_time, new_time, sizeof(clock_time_t));
     return self->valid;
+}
+
+void ClockNewTick(clock_t self) {
+    self->current_time.time.seconds[0] = 1;
 }
