@@ -31,13 +31,26 @@ clock_t ClockCreate(uint16_t tick_for_second, uint8_t snooze) {
 }
 
 bool ClockGetTime(clock_t self, clock_time_t * result) {
+    if (result == NULL) {
+        return false;
+    }
     memcpy(result, &self->current_time, sizeof(clock_time_t));
     return self->valid;
 }
 
 bool ClockSetTime(clock_t self, const clock_time_t * new_time) {
-    self->valid = true;
-    memcpy(&self->current_time, new_time, sizeof(clock_time_t));
+    if (new_time == NULL) {
+        return false;
+    }
+    uint8_t seconds = new_time->time.seconds[1] * 10 + new_time->time.seconds[0];
+    uint8_t minutes = new_time->time.minutes[1] * 10 + new_time->time.minutes[0];
+    uint8_t hours = new_time->time.hours[1] * 10 + new_time->time.hours[0];
+    if (seconds > 59 || minutes > 59 || hours > 23) {
+        self->valid = false;
+    } else {
+        self->valid = true;
+        memcpy(&self->current_time, new_time, sizeof(clock_time_t));
+    }
     return self->valid;
 }
 
@@ -85,10 +98,20 @@ void ClockNewTick(clock_t self) {
     }
 }
 
-bool CLockSetAlarm(clock_t self, const clock_time_t * alarm) {
-    memcpy(&self->alarm_time, alarm, sizeof(clock_time_t));
-    self->alarm_enabled = true;
-    return self->alarm_enabled;
+bool ClockSetAlarm(clock_t self, const clock_time_t * alarm) {
+    if (alarm == NULL) {
+        return false;
+    }
+    uint8_t seconds = alarm->time.seconds[1] * 10 + alarm->time.seconds[0];
+    uint8_t minutes = alarm->time.minutes[1] * 10 + alarm->time.minutes[0];
+    uint8_t hours = alarm->time.hours[1] * 10 + alarm->time.hours[0];
+    if (seconds > 59 || minutes > 59 || hours > 23) {
+        return false;
+    } else {
+        memcpy(&self->alarm_time, alarm, sizeof(clock_time_t));
+        self->alarm_enabled = true;
+        return true;
+    }
 }
 
 bool ClockGetAlarm(clock_t self, clock_time_t * alarm_time) {

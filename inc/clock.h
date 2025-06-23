@@ -41,7 +41,7 @@ bool ClockSetTime(clock_t clock, const clock_time_t * new_time);
  */
 void ClockNewTick(clock_t clock);
 
-bool CLockSetAlarm(clock_t self, const clock_time_t * alarm_time);
+bool ClockSetAlarm(clock_t self, const clock_time_t * alarm_time);
 
 bool ClockGetAlarm(clock_t self, clock_time_t * alarm_time);
 
