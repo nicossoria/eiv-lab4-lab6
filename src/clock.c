@@ -4,6 +4,7 @@
 
 struct clock_s {
     uint16_t clock_ticks;
+    uint16_t ticks_for_seconds;
     clock_time_t current_time;
     clock_time_t alarm_time;
     clock_time_t snooze_time;
@@ -17,10 +18,10 @@ struct clock_s {
 
 clock_t ClockCreate(uint16_t tick_for_second, uint8_t snooze) {
     static struct clock_s self[1];
-
-    (void)tick_for_second;
-
     memset(self, 0, sizeof(struct clock_s));
+
+    self->clock_ticks=0;
+    self->ticks_for_seconds=tick_for_second;
     self->valid = false;
     self->snooze = snooze;
     self->alarm_enabled = false;
@@ -56,7 +57,7 @@ bool ClockSetTime(clock_t self, const clock_time_t * new_time) {
 
 void ClockNewTick(clock_t self) {
     self->clock_ticks++;
-    if (self->clock_ticks == 5) {
+    if (self->clock_ticks == self->ticks_for_seconds) {
         self->clock_ticks = 0;
         self->current_time.time.seconds[0]++;
         if (self->current_time.time.seconds[0] > 9) {
@@ -159,4 +160,8 @@ void ClockCancelAlarm(clock_t self) {
         self->alarm_triggered = false;
         self->alarm_canceled = true;
     }
+}
+
+bool ClockIsAlarmEnabled(clock_t self){
+    return self->alarm_enabled;
 }

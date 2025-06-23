@@ -54,11 +54,6 @@ static void SimulateHours(clock_t clock, uint8_t hours);
 
 /* === Public function definitions ============================================================================== */
 
-/**
-- Hacer una prueba con frecuencia de reloj diferente
-- Tratar de posponer la alarma con valores invalidos y verificar que los rechaza.
-*/
-
 void setUp(void) {
     clock = ClockCreate(CLOCK_TICKS_FOR_SECOND, SNOOZE_TIME);
 }
@@ -270,6 +265,39 @@ void test_set_alarm_with_invalid_values(void) {
     TEST_ASSERT_FALSE(ClockSetAlarm(clock, &invalid_alarm));
     TEST_ASSERT_TRUE(ClockGetAlarm(clock, &alarm_read));
     TEST_ASSERT_EQUAL_UINT8_ARRAY(alarm.bcd, alarm_read.bcd, 6);
+}
+
+// Hacer una prueba con frecuencia de reloj diferente
+void test_clock_with_different_frequency(void) {
+    clock = ClockCreate(10, SNOOZE_TIME);
+    ClockSetTime(clock, &(clock_time_t){0});
+    ClockSetAlarm(clock, &(clock_time_t){0});
+    for (uint16_t i = 0; i < 10; i++) {
+        ClockNewTick(clock);
+    }
+    TEST_ASSERT_TIME(1, 0, 0, 0, 0, 0);
+}
+
+// Tratar de posponer la alarma con valores invalidos y verificar que los rechaza.
+void test_snooze_with_zero_value(void) {
+    clock = ClockCreate(CLOCK_TICKS_FOR_SECOND, 0);
+    static const clock_time_t alarm_time = {.time = {.seconds = {0, 0}, .minutes = {1, 0}, .hours = {8, 0}}};
+    TEST_ASSERT_TRUE(ClockSetAlarm(clock, &alarm_time));
+    ClockSetTime(clock, &(clock_time_t){.time = {.seconds = {0, 0}, .minutes = {0, 0}, .hours = {8, 0}}});
+    SimulateMinutes(clock, 1);
+    TEST_ASSERT_TRUE(ClockIsAlarmTriggered(clock));
+    ClockSnooze(clock);
+    TEST_ASSERT_TRUE(ClockIsAlarmTriggered(clock));
+}
+
+// La alarma esta activada
+
+void test_is_alarm_enabled_or_disabled(void) {
+    TEST_ASSERT_FALSE(ClockIsAlarmEnabled(clock));
+    ClockSetAlarm(clock, &(clock_time_t){0});
+    TEST_ASSERT_TRUE(ClockIsAlarmEnabled(clock));
+    ClockDisableAlarm(clock);
+    TEST_ASSERT_FALSE(ClockIsAlarmEnabled(clock));
 }
 
 /* === Private function definitions ================================================================================ */

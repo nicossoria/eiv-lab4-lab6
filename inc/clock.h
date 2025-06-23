@@ -52,3 +52,5 @@ void ClockDisableAlarm(clock_t self);
 void ClockSnooze(clock_t self);
 
 void ClockCancelAlarm(clock_t self);
+
+bool ClockIsAlarmEnabled(clock_t self);
