@@ -1,20 +1,59 @@
+/*********************************************************************************************************************
+Copyright (c) 2025, Martin Nicolas Soria <soria.m.nicolas@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, disponiblestribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+SPDX-License-Identifier: MIT
+*********************************************************************************************************************/
+
+/** @file test_reloj.c
+ ** @brief Implementación de la biblioteca de gestión de reloj despertador con alarma.
+ **/
+
+/* === Headers files inclusions ==================================================================================== */
+
 #include "clock.h"
 #include <stddef.h>
 #include <string.h>
 
+/* === Macros definitions ========================================================================================== */
+
+/* === Private data type declarations ============================================================================== */
+
+/**
+ * @brief Estructura privada que representa el reloj.
+ */
 struct clock_s {
-    uint16_t clock_ticks;
-    uint16_t ticks_for_seconds;
-    clock_time_t current_time;
-    clock_time_t alarm_time;
-    clock_time_t snooze_time;
-    uint8_t snooze;
-    bool valid;
-    bool alarm_enabled;
-    bool alarm_triggered;
-    bool alarm_canceled;
-    bool snooze_enabled;
+    uint16_t clock_ticks;           /**< Contador de ticks */
+    uint16_t ticks_for_seconds;     /**< Ticks necesarios para un segundo */
+    clock_time_t current_time;      /**< Hora actual */
+    clock_time_t alarm_time;        /**< Hora de la alarma */
+    clock_time_t snooze_time;       /**< Hora a la que sonará la alarma pospuesta */
+    uint8_t snooze;                 /**< Tiempo de posposición de la alarma en minutos */
+    bool valid;                     /**< Indica si la hora es válida */
+    bool alarm_enabled;             /**< Indica si la alarma está habilitada */
+    bool alarm_triggered;           /**< Indica si la alarma debe sonar */
+    bool alarm_canceled;            /**< Indica si la alarma fue cancelada */
+    bool snooze_enabled;            /**< Indica si la alarma está pospuesta */
 };
+/* === Private function declarations =============================================================================== */
+
+/* === Private variable definitions ================================================================================ */
+
+/* === Public variable definitions ================================================================================= */
+
+/* === Public function definitions ============================================================================== */
 
 clock_t ClockCreate(uint16_t tick_for_second, uint8_t snooze) {
     static struct clock_s self[1];
@@ -165,3 +204,7 @@ void ClockCancelAlarm(clock_t self) {
 bool ClockIsAlarmEnabled(clock_t self){
     return self->alarm_enabled;
 }
+
+/* === Private function definitions ================================================================================ */
+
+/* === End of documentation ======================================================================================== */
