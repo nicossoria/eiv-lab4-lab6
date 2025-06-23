@@ -12,7 +12,7 @@ typedef union {
 
 typedef struct clock_s * clock_t;
 
-clock_t ClockCreate(uint16_t tick_for_second);
+clock_t ClockCreate(uint16_t tick_for_second, uint8_t snooze);
 
 /**
  * @brief Obtiene la hora actual del reloj.
@@ -46,3 +46,9 @@ bool CLockSetAlarm(clock_t self, const clock_time_t * alarm_time);
 bool ClockGetAlarm(clock_t self, clock_time_t * alarm_time);
 
 bool ClockIsAlarmTriggered(clock_t self);
+
+void ClockDisableAlarm(clock_t self);
+
+void ClockSnooze(clock_t self);
+
+void ClockCancelAlarm(clock_t self);
