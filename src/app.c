@@ -53,146 +53,43 @@ static app_state_t current_state = STATE_CLOCK_RUNNING;
 
 /* === Public function definitions ============================================================================== */
 
-board_t AppInit(void) {
+board_t AppInit() {
+    board_t board = board_create();
     clock = ClockCreate(TICKS_FOR_SECOND, SNOOZE_TIME);
-    return board_create();
+    
+    // Configurar parpadeo inicial porque la hora no es válida al comienzo
+    DisplayFlashDigit(board->screen, 0, 3, 50);
+    DisplayFlashPoints(board->screen, 1, 1, 50);
+    
+    ScreenDisablePoint(board->screen, 0);
+    ScreenDisablePoint(board->screen, 2);
+    ScreenDisablePoint(board->screen, 3);
+
+    return board; //n6
 }
 
 void AppRun(board_t board) {
     static uint16_t ticks = 0;
-    static uint16_t f1_hold_tic = 0;
-    static uint16_t idle_ticks = 0;
-    static clock_time_t current_time = {0};
-    for (int i = 0; i < 4; i++) {
-        current_time.bcd[i] = 0;
-    }
-
-    ScreenRefresh(board->screen);
+    static clock_time_t current_time;
 
     ticks++;
-    if (ticks >= TICKS_FOR_SECOND) //
-    {
+    if (ticks >= TICKS_FOR_SECOND) {
         ClockNewTick(clock);
         ticks = 0;
     }
 
-    switch (current_state) {
-    case STATE_CLOCK_RUNNING:
-
-        if (ClockGetTime(clock, &current_time)) {
-
-            ScreenWriteBCD(board->screen, current_time.bcd, 4);
-            DisplayFlashPoints(board->screen, 1, 1, 20);
-
-        } else {
-            ScreenWriteBCD(board->screen, current_time.bcd, 4);
-            DisplayFlashDigit(board->screen, 0, 3, 20);
-        }
-
-        if (DigitalInputGetIsActive(board->set_time)) {
-            f1_hold_tic++;
-            if (f1_hold_tic >= TICKS_FOR_SECOND * 3) {
-                current_state = STATE_SET_TIME_MINUTES;
-                f1_hold_tic = 0;
-                idle_ticks = 0;
-            }
-        } else {
-            f1_hold_tic = 0;
-        }
-
-        break;
-
-    case STATE_SET_TIME_MINUTES:
+    if (ClockGetTime(clock, &current_time)) {
         ScreenWriteBCD(board->screen, current_time.bcd, 4);
-        DisplayFlashDigit(board->screen, 0, 1, 20);
-        idle_ticks++;
-
-        if (DigitalInputGetIsActive(board->increment)) {
-            current_time.time.minutes[0]++;
-            if (current_time.time.minutes[0] > 9) {
-                current_time.time.minutes[0] = 0;
-                current_time.time.minutes[1]++;
-                if (current_time.time.minutes[1] > 5) {
-                    current_time.time.minutes[1] = 0;
-                }
-            }
-            idle_ticks = 0;
-        }
-
-        if (DigitalInputGetIsActive(board->decrement)) {
-            if (current_time.time.minutes[0] == 0) {
-                current_time.time.minutes[0] = 9;
-                if (current_time.time.minutes[1] == 0) {
-                    current_time.time.minutes[1] = 5;
-                } else {
-                    current_time.time.minutes[1]--;
-                }
-            } else {
-                current_time.time.minutes[0]--;
-            }
-            idle_ticks = 0;
-        }
-        if (DigitalInputGetIsActive(board->accept)) {
-            current_state = STATE_SET_TIME_HOURS;
-            idle_ticks = 0;
-        }
-
-        if (DigitalInputGetIsActive(board->cancel) || idle_ticks >= TICKS_FOR_SECOND * 30) {
-            current_state = STATE_CLOCK_RUNNING;
-        }
-
-        break;
-
-    case STATE_SET_TIME_HOURS:
-        ScreenWriteBCD(board->screen, current_time.bcd, 4);
-        DisplayFlashDigit(board->screen, 2, 3, 20);
-        idle_ticks++;
-
-        if (DigitalInputGetIsActive(board->increment)) {
-            current_time.time.hours[0]++;
-            if ((current_time.time.hours[1] == 2 && current_time.time.hours[0] > 3) ||
-                (current_time.time.hours[0] > 9)) {
-                current_time.time.hours[0] = 0;
-                current_time.time.hours[1]++;
-                if (current_time.time.hours[1] > 2)
-                    current_time.time.hours[1] = 0;
-            }
-            idle_ticks = 0;
-        }
-
-        if (DigitalInputGetIsActive(board->decrement)) {
-            if (current_time.time.hours[0] == 0) {
-                current_time.time.hours[0] = 9;
-                if (current_time.time.hours[1] == 0) {
-                    current_time.time.hours[1] = 2;
-                } else {
-                    current_time.time.hours[1]--;
-                }
-                if (current_time.time.hours[1] == 2 && current_time.time.hours[0] > 3) {
-                    current_time.time.hours[0] = 3;
-                }
-            } else {
-                current_time.time.hours[0]--;
-            }
-            idle_ticks = 0;
-        }
-
-        if (DigitalInputGetIsActive(board->accept)) {
-            ClockSetTime(clock, &current_time);
-            current_state = STATE_CLOCK_RUNNING;
-        }
-
-        if (DigitalInputGetIsActive(board->cancel) || idle_ticks >= TICKS_FOR_SECOND * 30) {
-            current_state = STATE_CLOCK_RUNNING;
-        }
-        break;
-    case STATE_CLOCK:
-    case STATE_SET_ALARM_MINUTES:
-    case STATE_SET_ALARM_HOURS:
-    case STATE_SNOOZE:
-        break;
+        ScreenEnablePoint(board->screen, 1);
+    } else {
+        uint8_t default_bcd[4] = {0, 0, 0, 0};
+        ScreenWriteBCD(board->screen, default_bcd, 4);
     }
+
 }
+
+
+
 /* === Private function definitions ================================================================================
  */
 
