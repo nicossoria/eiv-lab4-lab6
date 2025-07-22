@@ -56,21 +56,27 @@ static app_state_t current_state = STATE_CLOCK_RUNNING;
 board_t AppInit() {
     board_t board = board_create();
     clock = ClockCreate(TICKS_FOR_SECOND, SNOOZE_TIME);
-    
-    // Configurar parpadeo inicial porque la hora no es válida al comienzo
-    DisplayFlashDigit(board->screen, 0, 3, 50);
-    DisplayFlashPoints(board->screen, 1, 1, 50);
-    
-    ScreenDisablePoint(board->screen, 0);
+
+    ScreenDisablePoint(board->screen, 0); 
     ScreenDisablePoint(board->screen, 2);
     ScreenDisablePoint(board->screen, 3);
 
-    return board; //n6
+    DisplayFlashPoints(board->screen, 1, 1, 50); 
+
+    ScreenWriteBCD(board->screen, (uint8_t[]){0, 0, 0, 0}, 4); 
+
+    DisplayFlashDigit(board->screen, 0, 3, 50); 
+
+    return board;
 }
 
 void AppRun(board_t board) {
     static uint16_t ticks = 0;
+    static uint16_t hold_ticks = 0;
     static clock_time_t current_time;
+    static clock_time_t backup_time;
+    static app_state_t state = STATE_CLOCK_RUNNING;
+    static bool show_default = true;
 
     ticks++;
     if (ticks >= TICKS_FOR_SECOND) {
@@ -78,14 +84,104 @@ void AppRun(board_t board) {
         ticks = 0;
     }
 
-    if (ClockGetTime(clock, &current_time)) {
-        ScreenWriteBCD(board->screen, current_time.bcd, 4);
-        ScreenEnablePoint(board->screen, 1);
-    } else {
-        uint8_t default_bcd[4] = {0, 0, 0, 0};
-        ScreenWriteBCD(board->screen, default_bcd, 4);
-    }
+    switch (state) {
 
+    case STATE_CLOCK_RUNNING:
+        if (ClockGetTime(clock, &current_time)) {
+            uint8_t display_bcd[4] = {
+                current_time.bcd[5],
+                current_time.bcd[4],  
+                current_time.bcd[3],  
+                current_time.bcd[2]   
+            };
+            ScreenWriteBCD(board->screen, display_bcd, 4);
+
+            ScreenEnablePoint(board->screen, 1);  // punto central
+            ScreenDisablePoint(board->screen, 0);
+            ScreenDisablePoint(board->screen, 2);
+            ScreenDisablePoint(board->screen, 3);
+            show_default = false;
+        } else if (!show_default) {
+            uint8_t default_bcd[4] = {0, 0, 0, 0};
+            ScreenWriteBCD(board->screen, default_bcd, 4);
+            DisplayFlashDigit(board->screen, 0, 3, 50);
+            DisplayFlashPoints(board->screen, 1, 1, 50);
+            ScreenDisablePoint(board->screen, 0);
+            ScreenDisablePoint(board->screen, 2);
+            ScreenDisablePoint(board->screen, 3);
+            show_default = true;
+        }
+
+        if (DigitalInputGetIsActive(board->set_time)) {
+            hold_ticks++;
+            if (hold_ticks >= 3 * TICKS_FOR_SECOND) {
+                state = STATE_SET_TIME_MINUTES;
+                ClockGetTime(clock, &current_time);
+                memcpy(&backup_time, &current_time, sizeof(clock_time_t));
+                DisplayFlashDigit(board->screen, 0, 1, 50); 
+                hold_ticks = 0;
+            }
+        } else {
+            hold_ticks = 0;
+        }
+        break;
+
+    case STATE_SET_TIME_MINUTES:
+        {
+            uint8_t display_bcd[4] = {
+                current_time.bcd[5],  
+                current_time.bcd[4],  
+                current_time.bcd[3],  
+                current_time.bcd[2] 
+            };
+            ScreenWriteBCD(board->screen, display_bcd, 4);
+
+            ScreenEnablePoint(board->screen, 1);
+            ScreenDisablePoint(board->screen, 0);
+            ScreenDisablePoint(board->screen, 2);
+            ScreenDisablePoint(board->screen, 3);
+            DisplayFlashDigit(board->screen, 0, 1, 50);
+
+            if (DigitalInputGetIsActive(board->increment)) {
+                current_time.time.minutes[0]++;
+                if (current_time.time.minutes[0] > 9) {
+                    current_time.time.minutes[0] = 0;
+                    current_time.time.minutes[1]++;
+                    if (current_time.time.minutes[1] > 5) {
+                        current_time.time.minutes[1] = 0;
+                    }
+                }
+                while (DigitalInputGetIsActive(board->increment));
+            }
+
+            if (DigitalInputGetIsActive(board->decrement)) {
+                if (current_time.time.minutes[0] == 0) {
+                    current_time.time.minutes[0] = 9;
+                    if (current_time.time.minutes[1] == 0) {
+                        current_time.time.minutes[1] = 5;
+                    } else {
+                        current_time.time.minutes[1]--;
+                    }
+                } else {
+                    current_time.time.minutes[0]--;
+                }
+                while (DigitalInputGetIsActive(board->decrement));
+            }
+
+            if (DigitalInputGetIsActive(board->accept)) {
+                ClockSetTime(clock, &current_time);
+                state = STATE_CLOCK_RUNNING;
+                while (DigitalInputGetIsActive(board->accept));
+            }
+
+            if (DigitalInputGetIsActive(board->cancel)) {
+                ClockSetTime(clock, &backup_time);
+                state = STATE_CLOCK_RUNNING;
+                while (DigitalInputGetIsActive(board->cancel));
+            }
+        }
+        break;
+    }
 }
 
 
