@@ -73,6 +73,7 @@ board_t AppInit() {
 void AppRun(board_t board) {
     static uint16_t ticks = 0;
     static uint16_t hold_ticks = 0;
+    static uint16_t inactive_ticks = 0;
     static clock_time_t current_time;
     static clock_time_t backup_time;
     static app_state_t state = STATE_CLOCK_RUNNING;
@@ -129,6 +130,15 @@ void AppRun(board_t board) {
 
     case STATE_SET_TIME_MINUTES:
         {
+            inactive_ticks++;
+            if (inactive_ticks >= 30 * TICKS_FOR_SECOND) {
+                ClockSetTime(clock, &backup_time);
+                state = STATE_CLOCK_RUNNING;
+                inactive_ticks = 0;
+                return;
+            }
+            
+            
             uint8_t display_bcd[4] = {
                 current_time.bcd[5],  
                 current_time.bcd[4],  
@@ -139,6 +149,7 @@ void AppRun(board_t board) {
             DisplayFlashDigit(board->screen, 0, 1, 50);
 
             if (DigitalInputGetIsActive(board->increment)) {
+                inactive_ticks = 0;
                 current_time.time.minutes[0]++;
                 if (current_time.time.minutes[0] > 9) {
                     current_time.time.minutes[0] = 0;
@@ -151,6 +162,7 @@ void AppRun(board_t board) {
             }
 
             if (DigitalInputGetIsActive(board->decrement)) {
+                inactive_ticks = 0;
                 if (current_time.time.minutes[0] == 0) {
                     current_time.time.minutes[0] = 9;
                     if (current_time.time.minutes[1] == 0) {
@@ -165,12 +177,15 @@ void AppRun(board_t board) {
             }
 
             if (DigitalInputGetIsActive(board->accept)) {
+                inactive_ticks = 0;
+                inactive_ticks = 0;
                 DisplayFlashDigit(board->screen, 2, 3, 50);
                 state = STATE_SET_TIME_HOURS;
                 while (DigitalInputGetIsActive(board->accept));
             }
 
             if (DigitalInputGetIsActive(board->cancel)) {
+                inactive_ticks = 0;
                 ClockSetTime(clock, &backup_time);
                 state = STATE_CLOCK_RUNNING;
                 while (DigitalInputGetIsActive(board->cancel));
@@ -180,6 +195,14 @@ void AppRun(board_t board) {
         
 
         case STATE_SET_TIME_HOURS:{
+            inactive_ticks++;
+            if (inactive_ticks >= 30 * TICKS_FOR_SECOND) {
+                ClockSetTime(clock, &backup_time);
+                state = STATE_CLOCK_RUNNING;
+                inactive_ticks = 0;
+                return;
+            }
+
             uint8_t display_bcd[4]={
                 current_time.bcd[5],  
                 current_time.bcd[4],  
@@ -191,6 +214,7 @@ void AppRun(board_t board) {
 
             if (DigitalInputGetIsActive(board->increment))
             {
+                inactive_ticks = 0;
                 current_time.time.hours[0]++;
                 if ((current_time.time.hours[1]==2 && current_time.time.hours[0]>3) || current_time.time.hours[0]>9) {
                     current_time.time.hours[0] = 0;
@@ -204,6 +228,7 @@ void AppRun(board_t board) {
 
             if (DigitalInputGetIsActive(board->decrement))
             {
+                inactive_ticks = 0;
                 if (current_time.time.hours[0] == 0) {
                     current_time.time.hours[0] = 9;
                     if (current_time.time.hours[1] == 0) {
@@ -221,12 +246,14 @@ void AppRun(board_t board) {
             }
             if (DigitalInputGetIsActive(board->accept))
             {
+                inactive_ticks = 0;
                 ClockSetTime(clock, &current_time);
                 state = STATE_CLOCK_RUNNING;
                 while (DigitalInputGetIsActive(board->accept));
             }
 
             if(DigitalInputGetIsActive(board->cancel)) {
+                inactive_ticks = 0;
                 ClockSetTime(clock, &backup_time);
                 state = STATE_CLOCK_RUNNING;
                 while (DigitalInputGetIsActive(board->cancel));
