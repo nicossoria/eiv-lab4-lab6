@@ -96,10 +96,11 @@ void AppRun(board_t board) {
             };
             ScreenWriteBCD(board->screen, display_bcd, 4);
 
-            ScreenEnablePoint(board->screen, 1);  // punto central
+            ScreenEnablePoint(board->screen, 1);
             ScreenDisablePoint(board->screen, 0);
             ScreenDisablePoint(board->screen, 2);
             ScreenDisablePoint(board->screen, 3);
+            DisplayFlashDigit(board->screen, 0, 0, 0);
             show_default = false;
         } else if (!show_default) {
             uint8_t default_bcd[4] = {0, 0, 0, 0};
@@ -135,11 +136,6 @@ void AppRun(board_t board) {
                 current_time.bcd[2] 
             };
             ScreenWriteBCD(board->screen, display_bcd, 4);
-
-            ScreenEnablePoint(board->screen, 1);
-            ScreenDisablePoint(board->screen, 0);
-            ScreenDisablePoint(board->screen, 2);
-            ScreenDisablePoint(board->screen, 3);
             DisplayFlashDigit(board->screen, 0, 1, 50);
 
             if (DigitalInputGetIsActive(board->increment)) {
@@ -169,8 +165,8 @@ void AppRun(board_t board) {
             }
 
             if (DigitalInputGetIsActive(board->accept)) {
-                ClockSetTime(clock, &current_time);
-                state = STATE_CLOCK_RUNNING;
+                DisplayFlashDigit(board->screen, 2, 3, 50);
+                state = STATE_SET_TIME_HOURS;
                 while (DigitalInputGetIsActive(board->accept));
             }
 
@@ -179,8 +175,64 @@ void AppRun(board_t board) {
                 state = STATE_CLOCK_RUNNING;
                 while (DigitalInputGetIsActive(board->cancel));
             }
+            break;
         }
-        break;
+        
+
+        case STATE_SET_TIME_HOURS:{
+            uint8_t display_bcd[4]={
+                current_time.bcd[5],  
+                current_time.bcd[4],  
+                current_time.bcd[3],  
+                current_time.bcd[2] 
+            };
+            ScreenWriteBCD(board->screen, display_bcd, 4);
+            DisplayFlashDigit(board->screen, 2, 3, 50);
+
+            if (DigitalInputGetIsActive(board->increment))
+            {
+                current_time.time.hours[0]++;
+                if ((current_time.time.hours[1]==2 && current_time.time.hours[0]>3) || current_time.time.hours[0]>9) {
+                    current_time.time.hours[0] = 0;
+                    current_time.time.hours[1]++;
+                    if (current_time.time.hours[1] > 2) {
+                        current_time.time.hours[1] = 0;
+                    }
+                }
+                while (DigitalInputGetIsActive(board->increment));
+            }
+
+            if (DigitalInputGetIsActive(board->decrement))
+            {
+                if (current_time.time.hours[0] == 0) {
+                    current_time.time.hours[0] = 9;
+                    if (current_time.time.hours[1] == 0) {
+                        current_time.time.hours[1] = 2;
+                    } else {
+                        current_time.time.hours[1]--;
+                    }
+                    if(current_time.time.hours[1] == 2 && current_time.time.hours[0] > 3) {
+                        current_time.time.hours[0] = 3;
+                    }
+                }else {
+                    current_time.time.hours[0]--;
+                }
+                while (DigitalInputGetIsActive(board->decrement));
+            }
+            if (DigitalInputGetIsActive(board->accept))
+            {
+                ClockSetTime(clock, &current_time);
+                state = STATE_CLOCK_RUNNING;
+                while (DigitalInputGetIsActive(board->accept));
+            }
+
+            if(DigitalInputGetIsActive(board->cancel)) {
+                ClockSetTime(clock, &backup_time);
+                state = STATE_CLOCK_RUNNING;
+                while (DigitalInputGetIsActive(board->cancel));
+            }
+            break;
+        }
     }
 }
 
