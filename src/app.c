@@ -82,6 +82,7 @@ void AppRun(board_t board) {
     static clock_time_t alarm_time = {0};
     static clock_time_t backup_alarm_time = {0};
     static bool alarm_set = false;
+    static bool alarm_active = false;
     static app_state_t state = STATE_CLOCK_RUNNING;
     static bool show_default = true;
     static bool time_set = false;
@@ -153,10 +154,18 @@ void AppRun(board_t board) {
         } else {
             hold_ticks_alarm = 0;
         }
-        if (alarm_set) {
+        if (alarm_active) {
             ScreenEnablePoint(board->screen, 3); // último punto
         } else {
             ScreenDisablePoint(board->screen, 3);
+        }
+        if (DigitalInputGetIsActive(board->accept)&&alarm_set) {
+            alarm_active = true;
+            while (DigitalInputGetIsActive(board->accept));
+        }
+        if (DigitalInputGetIsActive(board->cancel)){
+            alarm_active = false;
+            while (DigitalInputGetIsActive(board->cancel));
         }
 
         break;
@@ -313,7 +322,7 @@ void AppRun(board_t board) {
         ScreenEnablePoint(board->screen, 1);
         ScreenEnablePoint(board->screen, 2);
         ScreenEnablePoint(board->screen, 3);
-        DisplayFlashPoints(board->screen, 1, 0, 0);
+        DisplayFlashPoints(board->screen, 1, 1, 0);
         DisplayFlashDigit(board->screen, 0, 1, 50);
         if (DigitalInputGetIsActive(board->increment)) {
             inactive_ticks = 0;
@@ -412,6 +421,7 @@ void AppRun(board_t board) {
         if (DigitalInputGetIsActive(board->accept)) {
             inactive_ticks = 0;
             alarm_set = true;
+            alarm_active = true;
             ClockSetAlarm(clock, &alarm_time);
             state = STATE_CLOCK_RUNNING;
             while (DigitalInputGetIsActive(board->accept));
