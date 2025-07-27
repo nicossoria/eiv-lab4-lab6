@@ -153,6 +153,12 @@ void AppRun(board_t board) {
         } else {
             hold_ticks_alarm = 0;
         }
+        if (alarm_set) {
+            ScreenEnablePoint(board->screen, 3); // último punto
+        } else {
+            ScreenDisablePoint(board->screen, 3);
+        }
+
         break;
 
     case STATE_SET_TIME_MINUTES:
@@ -307,30 +313,31 @@ void AppRun(board_t board) {
         ScreenEnablePoint(board->screen, 1);
         ScreenEnablePoint(board->screen, 2);
         ScreenEnablePoint(board->screen, 3);
+        DisplayFlashPoints(board->screen, 1, 0, 0);
         DisplayFlashDigit(board->screen, 0, 1, 50);
         if (DigitalInputGetIsActive(board->increment)) {
             inactive_ticks = 0;
-            current_time.time.minutes[0]++;
-            if (current_time.time.minutes[0] > 9) {
-                current_time.time.minutes[0] = 0;
-                current_time.time.minutes[1]++;
-                if (current_time.time.minutes[1] > 5) {
-                    current_time.time.minutes[1] = 0;
+            alarm_time.time.minutes[0]++;
+            if (alarm_time.time.minutes[0] > 9) {
+                alarm_time.time.minutes[0] = 0;
+                alarm_time.time.minutes[1]++;
+                if (alarm_time.time.minutes[1] > 5) {
+                    alarm_time.time.minutes[1] = 0;
                 }
             }
             while (DigitalInputGetIsActive(board->increment));
         }
         if (DigitalInputGetIsActive(board->decrement)) {
             inactive_ticks = 0;
-            if (current_time.time.minutes[0] == 0) {
-                current_time.time.minutes[0] = 9;
-                if (current_time.time.minutes[1] == 0) {
-                    current_time.time.minutes[1] = 5;
+            if (alarm_time.time.minutes[0] == 0) {
+                alarm_time.time.minutes[0] = 9;
+                if (alarm_time.time.minutes[1] == 0) {
+                    alarm_time.time.minutes[1] = 5;
                 } else {
-                    current_time.time.minutes[1]--;
+                    alarm_time.time.minutes[1]--;
                 }
             } else {
-                current_time.time.minutes[0]--;
+                alarm_time.time.minutes[0]--;
             }
             while (DigitalInputGetIsActive(board->decrement));
         }
@@ -373,12 +380,12 @@ void AppRun(board_t board) {
 
         if (DigitalInputGetIsActive(board->increment)) {
             inactive_ticks = 0;
-            current_time.time.hours[0]++;
-            if ((current_time.time.hours[1]==2 && current_time.time.hours[0]>3) || current_time.time.hours[0]>9) {
-                current_time.time.hours[0] = 0;
-                current_time.time.hours[1]++;
-                if (current_time.time.hours[1] > 2) {
-                    current_time.time.hours[1] = 0;
+            alarm_time.time.hours[0]++;
+            if ((alarm_time.time.hours[1]==2 && alarm_time.time.hours[0]>3) || alarm_time.time.hours[0]>9) {
+                alarm_time.time.hours[0] = 0;
+                alarm_time.time.hours[1]++;
+                if (alarm_time.time.hours[1] > 2) {
+                    alarm_time.time.hours[1] = 0;
                 }
             }
             while (DigitalInputGetIsActive(board->increment));
@@ -386,25 +393,24 @@ void AppRun(board_t board) {
 
         if (DigitalInputGetIsActive(board->decrement)) {
             inactive_ticks = 0;
-            if (current_time.time.hours[0] == 0) {
-                current_time.time.hours[0] = 9;
-                if (current_time.time.hours[1] == 0) {
-                    current_time.time.hours[1] = 2;
+            if (alarm_time.time.hours[0] == 0) {
+                alarm_time.time.hours[0] = 9;
+                if (alarm_time.time.hours[1] == 0) {
+                    alarm_time.time.hours[1] = 2;
                 } else {
-                    current_time.time.hours[1]--;
+                    alarm_time.time.hours[1]--;
                 }
-                if(current_time.time.hours[1] == 2 && current_time.time.hours[0] > 3) {
-                    current_time.time.hours[0] = 3;
+                if(alarm_time.time.hours[1] == 2 && alarm_time.time.hours[0] > 3) {
+                    alarm_time.time.hours[0] = 3;
                 }
             }else {
-                current_time.time.hours[0]--;
+                alarm_time.time.hours[0]--;
             }
             while (DigitalInputGetIsActive(board->decrement));
         }
 
         if (DigitalInputGetIsActive(board->accept)) {
             inactive_ticks = 0;
-            memcpy(&alarm_time, &current_time, sizeof(clock_time_t));
             alarm_set = true;
             ClockSetAlarm(clock, &alarm_time);
             state = STATE_CLOCK_RUNNING;
