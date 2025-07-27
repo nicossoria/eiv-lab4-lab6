@@ -24,10 +24,12 @@ SPDX-License-Identifier: MIT
 /* === Headers files inclusions ==================================================================================== */
 
 #include "app.h"
+#include <string.h>
+
 
 /* === Macros definitions ========================================================================================== */
 
-#define TICKS_FOR_SECOND 5
+#define TICKS_FOR_SECOND 10
 #define SNOOZE_TIME      5
 
 /* === Private data type declarations ============================================================================== */
@@ -72,16 +74,23 @@ board_t AppInit() {
 
 void AppRun(board_t board) {
     static uint16_t ticks = 0;
-    static uint16_t hold_ticks = 0;
+    static uint16_t hold_ticks_time = 0;
+    static uint16_t hold_ticks_alarm = 0;
     static uint16_t inactive_ticks = 0;
     static clock_time_t current_time;
     static clock_time_t backup_time;
+    static clock_time_t alarm_time = {0};
+    static clock_time_t backup_alarm_time = {0};
+    static bool alarm_set = false;
     static app_state_t state = STATE_CLOCK_RUNNING;
     static bool show_default = true;
+    static bool time_set = false;
 
     ticks++;
     if (ticks >= TICKS_FOR_SECOND) {
-        ClockNewTick(clock);
+        if (time_set) {
+            ClockNewTick(clock);
+        }
         ticks = 0;
     }
 
@@ -115,16 +124,34 @@ void AppRun(board_t board) {
         }
 
         if (DigitalInputGetIsActive(board->set_time)) {
-            hold_ticks++;
-            if (hold_ticks >= 3 * TICKS_FOR_SECOND) {
+            hold_ticks_time++;
+            if (hold_ticks_time >= 3 * TICKS_FOR_SECOND) {
                 state = STATE_SET_TIME_MINUTES;
                 ClockGetTime(clock, &current_time);
                 memcpy(&backup_time, &current_time, sizeof(clock_time_t));
                 DisplayFlashDigit(board->screen, 0, 1, 50); 
-                hold_ticks = 0;
+                hold_ticks_time = 0;
             }
         } else {
-            hold_ticks = 0;
+            hold_ticks_time = 0;
+        }
+
+        if (DigitalInputGetIsActive(board->set_alarm)) {
+            hold_ticks_alarm++;
+            if (hold_ticks_alarm >= 3 * TICKS_FOR_SECOND && time_set) {
+                state = STATE_SET_ALARM_MINUTES;
+                memcpy(&current_time, &alarm_time, sizeof(clock_time_t)); //evitamos codigo repetido 
+                memcpy(&backup_alarm_time, &alarm_time, sizeof(clock_time_t));
+                ScreenEnablePoint(board->screen, 0);
+                ScreenEnablePoint(board->screen, 1);
+                ScreenEnablePoint(board->screen, 2);
+                ScreenEnablePoint(board->screen, 3);
+                DisplayFlashDigit(board->screen, 0, 1, 50);
+                inactive_ticks = 0; 
+                hold_ticks_alarm = 0;
+            }
+        } else {
+            hold_ticks_alarm = 0;
         }
         break;
 
@@ -247,6 +274,7 @@ void AppRun(board_t board) {
             if (DigitalInputGetIsActive(board->accept))
             {
                 inactive_ticks = 0;
+                time_set = true;
                 ClockSetTime(clock, &current_time);
                 state = STATE_CLOCK_RUNNING;
                 while (DigitalInputGetIsActive(board->accept));
@@ -260,9 +288,139 @@ void AppRun(board_t board) {
             }
             break;
         }
+    case STATE_SET_ALARM_MINUTES:{
+        inactive_ticks++;
+        if (inactive_ticks >= 30 * TICKS_FOR_SECOND) {
+            memcpy(&alarm_time, &backup_alarm_time, sizeof(clock_time_t));
+            state = STATE_CLOCK_RUNNING;
+            inactive_ticks = 0;
+            return;
+        }
+        uint8_t display_bcd[4] = {
+            alarm_time.bcd[5],  
+            alarm_time.bcd[4],  
+            alarm_time.bcd[3],  
+            alarm_time.bcd[2] 
+        };
+        ScreenWriteBCD(board->screen, display_bcd, 4);
+        ScreenEnablePoint(board->screen, 0);
+        ScreenEnablePoint(board->screen, 1);
+        ScreenEnablePoint(board->screen, 2);
+        ScreenEnablePoint(board->screen, 3);
+        DisplayFlashDigit(board->screen, 0, 1, 50);
+        if (DigitalInputGetIsActive(board->increment)) {
+            inactive_ticks = 0;
+            current_time.time.minutes[0]++;
+            if (current_time.time.minutes[0] > 9) {
+                current_time.time.minutes[0] = 0;
+                current_time.time.minutes[1]++;
+                if (current_time.time.minutes[1] > 5) {
+                    current_time.time.minutes[1] = 0;
+                }
+            }
+            while (DigitalInputGetIsActive(board->increment));
+        }
+        if (DigitalInputGetIsActive(board->decrement)) {
+            inactive_ticks = 0;
+            if (current_time.time.minutes[0] == 0) {
+                current_time.time.minutes[0] = 9;
+                if (current_time.time.minutes[1] == 0) {
+                    current_time.time.minutes[1] = 5;
+                } else {
+                    current_time.time.minutes[1]--;
+                }
+            } else {
+                current_time.time.minutes[0]--;
+            }
+            while (DigitalInputGetIsActive(board->decrement));
+        }
+
+        if (DigitalInputGetIsActive(board->accept)) {
+            inactive_ticks = 0;
+            DisplayFlashDigit(board->screen, 2, 3, 50);
+            state = STATE_SET_ALARM_HOURS;
+            while (DigitalInputGetIsActive(board->accept));
+        }
+        
+        if (DigitalInputGetIsActive(board->cancel)) {
+            inactive_ticks = 0;
+            memcpy(&alarm_time, &backup_alarm_time, sizeof(clock_time_t));
+            state = STATE_CLOCK_RUNNING;
+            while (DigitalInputGetIsActive(board->cancel));
+        }
+        break;
+    }
+    case STATE_SET_ALARM_HOURS:{
+        inactive_ticks++;
+        if (inactive_ticks >= 30 * TICKS_FOR_SECOND) {
+            memcpy(&alarm_time, &backup_alarm_time, sizeof(clock_time_t));
+            state = STATE_CLOCK_RUNNING;
+            inactive_ticks = 0;
+            return;
+        }
+        uint8_t display_bcd[4] = {
+            alarm_time.bcd[5],  
+            alarm_time.bcd[4],  
+            alarm_time.bcd[3],  
+            alarm_time.bcd[2] 
+        };
+        ScreenWriteBCD(board->screen, display_bcd, 4);
+        DisplayFlashDigit(board->screen, 2, 3, 50);
+        ScreenEnablePoint(board->screen, 0);
+        ScreenEnablePoint(board->screen, 1);
+        ScreenEnablePoint(board->screen, 2);
+        ScreenEnablePoint(board->screen, 3);
+
+        if (DigitalInputGetIsActive(board->increment)) {
+            inactive_ticks = 0;
+            current_time.time.hours[0]++;
+            if ((current_time.time.hours[1]==2 && current_time.time.hours[0]>3) || current_time.time.hours[0]>9) {
+                current_time.time.hours[0] = 0;
+                current_time.time.hours[1]++;
+                if (current_time.time.hours[1] > 2) {
+                    current_time.time.hours[1] = 0;
+                }
+            }
+            while (DigitalInputGetIsActive(board->increment));
+        }
+
+        if (DigitalInputGetIsActive(board->decrement)) {
+            inactive_ticks = 0;
+            if (current_time.time.hours[0] == 0) {
+                current_time.time.hours[0] = 9;
+                if (current_time.time.hours[1] == 0) {
+                    current_time.time.hours[1] = 2;
+                } else {
+                    current_time.time.hours[1]--;
+                }
+                if(current_time.time.hours[1] == 2 && current_time.time.hours[0] > 3) {
+                    current_time.time.hours[0] = 3;
+                }
+            }else {
+                current_time.time.hours[0]--;
+            }
+            while (DigitalInputGetIsActive(board->decrement));
+        }
+
+        if (DigitalInputGetIsActive(board->accept)) {
+            inactive_ticks = 0;
+            memcpy(&alarm_time, &current_time, sizeof(clock_time_t));
+            alarm_set = true;
+            ClockSetAlarm(clock, &alarm_time);
+            state = STATE_CLOCK_RUNNING;
+            while (DigitalInputGetIsActive(board->accept));
+        }
+
+        if (DigitalInputGetIsActive(board->cancel)) {
+            inactive_ticks = 0;
+            memcpy(&alarm_time, &backup_alarm_time, sizeof(clock_time_t));
+            state = STATE_CLOCK_RUNNING;
+            while (DigitalInputGetIsActive(board->cancel));
+        }
+        break;
     }
 }
-
+}
 
 
 /* === Private function definitions ================================================================================
