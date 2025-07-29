@@ -29,7 +29,7 @@ SPDX-License-Identifier: MIT
 
 /* === Macros definitions ========================================================================================== */
 
-#define TICKS_FOR_SECOND 10
+#define TICKS_FOR_SECOND 6
 #define SNOOZE_TIME      5
 
 /* === Private data type declarations ============================================================================== */
@@ -169,7 +169,7 @@ void AppRun(board_t board) {
             hold_ticks_alarm = 0;
         }
         if (alarm_active) {
-            ScreenEnablePoint(board->screen, 3); // último punto
+            ScreenEnablePoint(board->screen, 3);
         } else {
             ScreenDisablePoint(board->screen, 3);
         }
