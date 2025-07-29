@@ -40,8 +40,6 @@ typedef enum {
     STATE_SET_TIME_HOURS,
     STATE_SET_ALARM_MINUTES,
     STATE_SET_ALARM_HOURS,
-    STATE_SNOOZE,
-    STATE_CLOCK
 } app_state_t;
 
 /* === Private function declarations =============================================================================== */
@@ -49,7 +47,6 @@ typedef enum {
 /* === Private variable definitions ================================================================================ */
 
 static clock_t clock;
-static app_state_t current_state = STATE_CLOCK_RUNNING;
 
 /* === Public variable definitions ================================================================================= */
 
@@ -124,6 +121,23 @@ void AppRun(board_t board) {
             show_default = true;
         }
 
+        if(ClockIsAlarmTriggered(clock)){
+            AlarmLedOn(board->alarm_led);
+            if(DigitalInputGetIsActive(board->cancel)){
+                ClockCancelAlarm(clock);
+                AlarmLedOff(board->alarm_led);
+                while (DigitalInputGetIsActive(board->cancel));
+            }
+
+            if(DigitalInputGetIsActive(board->accept)){
+                ClockSnooze(clock);
+                AlarmLedOff(board->alarm_led);
+                while (DigitalInputGetIsActive(board->accept));
+            }
+        }else {
+            AlarmLedOff(board->alarm_led);
+        }
+
         if (DigitalInputGetIsActive(board->set_time)) {
             hold_ticks_time++;
             if (hold_ticks_time >= 3 * TICKS_FOR_SECOND) {
@@ -141,7 +155,7 @@ void AppRun(board_t board) {
             hold_ticks_alarm++;
             if (hold_ticks_alarm >= 3 * TICKS_FOR_SECOND && time_set) {
                 state = STATE_SET_ALARM_MINUTES;
-                memcpy(&current_time, &alarm_time, sizeof(clock_time_t)); //evitamos codigo repetido 
+                memcpy(&current_time, &alarm_time, sizeof(clock_time_t));
                 memcpy(&backup_alarm_time, &alarm_time, sizeof(clock_time_t));
                 ScreenEnablePoint(board->screen, 0);
                 ScreenEnablePoint(board->screen, 1);
@@ -163,11 +177,11 @@ void AppRun(board_t board) {
             alarm_active = true;
             while (DigitalInputGetIsActive(board->accept));
         }
-        if (DigitalInputGetIsActive(board->cancel)){
+        if (DigitalInputGetIsActive(board->cancel)&&alarm_set){
             alarm_active = false;
             while (DigitalInputGetIsActive(board->cancel));
         }
-
+        
         break;
 
     case STATE_SET_TIME_MINUTES:
@@ -425,6 +439,7 @@ void AppRun(board_t board) {
             ClockSetAlarm(clock, &alarm_time);
             state = STATE_CLOCK_RUNNING;
             while (DigitalInputGetIsActive(board->accept));
+            
         }
 
         if (DigitalInputGetIsActive(board->cancel)) {

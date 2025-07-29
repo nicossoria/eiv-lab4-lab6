@@ -27,6 +27,7 @@ SPDX-License-Identifier: MIT
 /* === Headers files inclusions ==================================================================================== */
 #include <stdint.h>
 #include <stdbool.h>
+#include "bsp.h"
 
 /* === Header for C++ compatibility ================================================================================ */
 
@@ -163,6 +164,20 @@ void ClockCancelAlarm(clock_t self);
  * @return false Si la alarma está deshabilitada.
  */
 bool ClockIsAlarmEnabled(clock_t self);
+
+/**
+ * @brief Habilita la alarma.
+ *
+ * @param clock Instancia del reloj.
+ */
+void AlarmLedOn(digital_output_t alarm_led);
+
+/**
+ * @brief Deshabilita la alarma.
+ *
+ * @param clock Instancia del reloj.
+ */
+void AlarmLedOff(digital_output_t alarm_led);
 
 /* === End of conditional blocks =================================================================================== */
 

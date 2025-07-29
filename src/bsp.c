@@ -91,7 +91,7 @@ board_t board_create(void) {
         board->accept = DigitalInputCreate(KEY_ACCEPT_GPIO, KEY_ACCEPT_BIT, false);
         board->cancel = DigitalInputCreate(KEY_CANCEL_GPIO, KEY_CANCEL_BIT, false);
 
-        // board->buzzer = DigitalOutputCreate(BUZZER_GPIO, BUZZER_BIT);
+        board->alarm_led = DigitalOutputCreate(PONCHO_RGB_RED_GPIO, PONCHO_RGB_RED_BIT);
     }
     return board;
 }

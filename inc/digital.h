@@ -129,6 +129,8 @@ bool DigitalWasInactive(digital_input_t input); // Opcion mas facil
  */
 enum digital_states_e DigitalWasChanged(digital_input_t input);
 
+
+
 /* === End of conditional blocks =================================================================================== */
 
 #ifdef __cplusplus

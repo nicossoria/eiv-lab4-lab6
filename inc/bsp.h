@@ -108,7 +108,7 @@ extern "C" {
  * No debe ser modificada directamente por el usuario.
  */
 typedef struct board_s {
-    digital_output_t buzzer;    /**< Zumbador de la placa */
+    digital_output_t alarm_led;    /**< Indicador de la alarma */
     digital_input_t set_time;   /**< Botón para configurar la hora */
     digital_input_t set_alarm;  /**< Botón para configurar la alarma */
     digital_input_t decrement;  /**< Botón para decrementar valores */

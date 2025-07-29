@@ -183,12 +183,10 @@ extern "C" {
 #define KEY_CANCEL_GPIO 5
 #define KEY_CANCEL_BIT  8
 
-// Definiciones de los recursos asociados al zumbador
-#define BUZZER_PORT 2
-#define BUZZER_PIN 2
-#define BUZZER_FUNC SCU_MODE_FUNC4
-#define BUZZER_GPIO 5
-#define BUZZER_BIT 2
+
+// Definiciones de los recursos asociados a los LEDs del poncho
+#define PONCHO_RGB_RED_GPIO  0
+#define PONCHO_RGB_RED_BIT   11
 
 /* === Public data type declarations =========================================================== */
  

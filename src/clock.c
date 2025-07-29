@@ -150,6 +150,7 @@ bool ClockSetAlarm(clock_t self, const clock_time_t * alarm) {
     } else {
         memcpy(&self->alarm_time, alarm, sizeof(clock_time_t));
         self->alarm_enabled = true;
+        self->alarm_canceled = false;
         return true;
     }
 }
@@ -203,6 +204,13 @@ void ClockCancelAlarm(clock_t self) {
 
 bool ClockIsAlarmEnabled(clock_t self){
     return self->alarm_enabled;
+}
+
+void AlarmLedOn(digital_output_t alarm_led) {
+    DigitalOutputDeactivate(alarm_led);
+}
+void AlarmLedOff(digital_output_t alarm_led) {
+    DigitalOutputActivate(alarm_led);
 }
 
 /* === Private function definitions ================================================================================ */
