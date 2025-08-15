@@ -33,11 +33,12 @@ extern "C" {
 #endif
 
 /* === Public macros definitions =================================================================================== */
-
 #include "bsp.h"
 #include "clock.h"
 #include "screen.h"
 #include "digital.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 /* === Public data type declarations =============================================================================== */
 
@@ -45,15 +46,30 @@ extern "C" {
 
 /* === Public function declarations ================================================================================ */
 
-/**
- * @brief Inicializa todos los módulos necesarios.
- */
+/** Inicializa BSP, display y reloj. Devuelve el handle de board para pasarlo a las tareas. */
 board_t AppInit(void);
 
 /**
- * @brief Ejecuta la lógica principal del reloj (debe llamarse periódicamente).
+ * @brief Tarea que gestiona el reloj, actualizando el tiempo y la alarma.
+ * 
+ * @param parameters 
  */
-void AppRun(board_t board);
+void TaskClock(void * parameters);
+
+/**
+ * @brief Tarea que gestiona los botones del reloj, permitiendo configurar la hora y la alarma.
+ * 
+ * @param parameters 
+ */
+void TaskButtons(void * parameters);
+
+/**
+ * @brief Tarea que gestiona la interfaz de usuario, actualizando la pantalla y mostrando la hora y la alarma.
+ * 
+ * @param parameters 
+ */
+void TaskUI(void * parameters);
+
 
 /* === End of conditional blocks =================================================================================== */
 

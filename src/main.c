@@ -40,60 +40,36 @@
 
 /* === Headers files inclusions =============================================================== */
 
-#include "bsp.h"
 #include "app.h"
-#include <stdbool.h>
-#include <stdint.h>
-/* === Macros definitions ====================================================================== */
-
-/* === Private data type declarations ========================================================== */
-
-/* === Private variable declarations =========================================================== */
-
-/* === Private function declarations =========================================================== */
-
-/* === Public variable definitions ============================================================= */
-
-/* === Private variable definitions ============================================================ */
-
-/* === Private function implementation ========================================================= */
-
-/* === Public function implementation ========================================================= */
-
-/* Errores:
- - Display 4 lo toma como posicion 0, el 3 como posicion 2, el 2 como posicion 3 y el 1 como posicion 4.
- - Parpadea muy rapido y no lo hace 2 display a la vez.
-*/
-
 #include "bsp.h"
-#include "screen.h"
-#include <stdbool.h>
-#include <stdint.h>
 
-void Delay1ms(void) {
-    for (volatile int i = 0; i < 8000; i++) {
-        __asm("NOP");
-    }
-}
+#include "FreeRTOS.h"
+#include "task.h"
+
+/* === Macros definitions ========================================================================================== */
+
+/* === Private data type declarations ============================================================================== */
+
+/* === Private function declarations =============================================================================== */
+
+/* === Public variable definitions ================================================================================= */
+
+/* === Public function definitions ================================================================================= */
 
 int main(void) {
     board_t board = AppInit();
 
-    while (true) {
-        ScreenRefresh(board->screen);  // Muy seguido, para multiplexar bien
-        Delay1ms();
+    /* Crear tareas */
+    xTaskCreate(TaskClock,   "clk",   256, board, tskIDLE_PRIORITY + 3, NULL);
+    xTaskCreate(TaskButtons, "keys",  256, board, tskIDLE_PRIORITY + 2, NULL);
+    xTaskCreate(TaskUI,      "ui",    512, board, tskIDLE_PRIORITY + 1, NULL);
 
-        static uint8_t refresh_counter = 0;
-        refresh_counter++;
-        if (refresh_counter >= 20) {  // AppRun cada 20ms
-            AppRun(board);
-            refresh_counter = 0;
-        }
-    }
+    vTaskStartScheduler();
 
-    return 0;
-
+    while (1) { /* debería no llegar aquí */ }
 }
+
+/* === Private function definitions ================================================================================ */
 
 /* === End of documentation ==================================================================== */
 

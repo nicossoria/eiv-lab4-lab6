@@ -22,435 +22,247 @@ SPDX-License-Identifier: MIT
  **/
 
 /* === Headers files inclusions ==================================================================================== */
-
 #include "app.h"
+#include "bsp.h"
+#include "clock.h"
+#include "screen.h"
+#include "digital.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "timers.h"
 #include <string.h>
-
-
+#include <stdbool.h>
+#include <stdint.h>
 /* === Macros definitions ========================================================================================== */
 
-#define TICKS_FOR_SECOND 6
-#define SNOOZE_TIME      5
 
 /* === Private data type declarations ============================================================================== */
-
-typedef enum {
-    STATE_CLOCK_RUNNING,
-    STATE_SET_TIME_MINUTES,
-    STATE_SET_TIME_HOURS,
-    STATE_SET_ALARM_MINUTES,
-    STATE_SET_ALARM_HOURS,
-} app_state_t;
 
 /* === Private function declarations =============================================================================== */
 
 /* === Private variable definitions ================================================================================ */
 
-static clock_t clock;
+typedef enum {
+    UI_MODE_NORMAL = 0,
+    UI_MODE_SET_TIME_MIN,
+    UI_MODE_SET_TIME_HOUR,
+    UI_MODE_SET_ALARM_MIN,
+    UI_MODE_SET_ALARM_HOUR
+} ui_mode_t;
+
+static board_t g_board;
+static screen_t g_screen;
+static clock_t g_clock;
+static ui_mode_t g_mode = UI_MODE_NORMAL;
+static clock_time_t g_edit;
+static clock_time_t g_alarm_cfg;
+static bool g_blink_sec = false;
+static TimerHandle_t g_timeout;
 
 /* === Public variable definitions ================================================================================= */
 
-/* === Public function definitions ============================================================================== */
+/* === Public function definitions ================================================================================= */
 
-board_t AppInit() {
-    board_t board = board_create();
-    clock = ClockCreate(TICKS_FOR_SECOND, SNOOZE_TIME);
-
-    ScreenDisablePoint(board->screen, 0); 
-    ScreenDisablePoint(board->screen, 2);
-    ScreenDisablePoint(board->screen, 3);
-
-    DisplayFlashPoints(board->screen, 1, 1, 50); 
-
-    ScreenWriteBCD(board->screen, (uint8_t[]){0, 0, 0, 0}, 4); 
-
-    DisplayFlashDigit(board->screen, 0, 3, 50); 
-
-    return board;
+static void to_digits(const clock_time_t *t, uint8_t d[4]) {
+    uint8_t hh = (uint8_t)(t->time.hours[1] * 10u + t->time.hours[0]);
+    uint8_t mm = (uint8_t)(t->time.minutes[1] * 10u + t->time.minutes[0]);
+    d[0] = (uint8_t)((hh / 10u) % 10u);
+    d[1] = (uint8_t)(hh % 10u);
+    d[2] = (uint8_t)((mm / 10u) % 10u);
+    d[3] = (uint8_t)(mm % 10u);
 }
 
-void AppRun(board_t board) {
-    static uint16_t ticks = 0;
-    static uint16_t hold_ticks_time = 0;
-    static uint16_t hold_ticks_alarm = 0;
-    static uint16_t inactive_ticks = 0;
-    static clock_time_t current_time;
-    static clock_time_t backup_time;
-    static clock_time_t alarm_time = {0};
-    static clock_time_t backup_alarm_time = {0};
-    static bool alarm_set = false;
-    static bool alarm_active = false;
-    static app_state_t state = STATE_CLOCK_RUNNING;
-    static bool show_default = true;
-    static bool time_set = false;
+static void ui_start_timeout(void) {
+    xTimerStop(g_timeout, 0);
+    xTimerStart(g_timeout, 0);
+}
 
-    ticks++;
-    if (ticks >= TICKS_FOR_SECOND) {
-        if (time_set) {
-            ClockNewTick(clock);
-        }
-        ticks = 0;
+static void ui_timeout_cb(TimerHandle_t xTimer) {
+    (void)xTimer;
+    g_mode = UI_MODE_NORMAL;
+}
+
+static void ui_render(void) {
+    uint8_t digits[4];
+    bool valid_now = true;
+
+    if (g_mode == UI_MODE_SET_TIME_MIN || g_mode == UI_MODE_SET_TIME_HOUR ||
+        g_mode == UI_MODE_SET_ALARM_MIN || g_mode == UI_MODE_SET_ALARM_HOUR) {
+        to_digits(&g_edit, digits);
+    } else {
+        clock_time_t now;
+        valid_now = ClockGetTime(g_clock, &now);
+        to_digits(&now, digits);
     }
 
-    switch (state) {
+    ScreenWriteBCD(g_screen, digits, 4);
 
-    case STATE_CLOCK_RUNNING:
-        if (ClockGetTime(clock, &current_time)) {
-            uint8_t display_bcd[4] = {
-                current_time.bcd[5],
-                current_time.bcd[4],  
-                current_time.bcd[3],  
-                current_time.bcd[2]   
-            };
-            ScreenWriteBCD(board->screen, display_bcd, 4);
+    for (int i = 0; i < 4; i++) {
+        ScreenDisablePoint(g_screen, i);
+    }
 
-            ScreenEnablePoint(board->screen, 1);
-            ScreenDisablePoint(board->screen, 0);
-            ScreenDisablePoint(board->screen, 2);
-            ScreenDisablePoint(board->screen, 3);
-            DisplayFlashDigit(board->screen, 0, 0, 0);
-            show_default = false;
-        } else if (!show_default) {
-            uint8_t default_bcd[4] = {0, 0, 0, 0};
-            ScreenWriteBCD(board->screen, default_bcd, 4);
-            DisplayFlashDigit(board->screen, 0, 3, 50);
-            DisplayFlashPoints(board->screen, 1, 1, 50);
-            ScreenDisablePoint(board->screen, 0);
-            ScreenDisablePoint(board->screen, 2);
-            ScreenDisablePoint(board->screen, 3);
-            show_default = true;
+    if (g_mode == UI_MODE_NORMAL && !valid_now) {
+        DisplayFlashDigit(g_screen, 0, 3, 20);
+        DisplayFlashPoints(g_screen, 0, 3, 20);
+    }
+
+    if (g_mode == UI_MODE_NORMAL) {
+        if (g_blink_sec) ScreenEnablePoint(g_screen, 1);
+    }
+
+    if (ClockIsAlarmEnabled(g_clock)) {
+        ScreenEnablePoint(g_screen, 0);
+    }
+    if (ClockIsAlarmTriggered(g_clock)) {
+        ScreenEnablePoint(g_screen, 3);
+    }
+
+    if (g_mode == UI_MODE_SET_TIME_MIN || g_mode == UI_MODE_SET_ALARM_MIN) {
+        DisplayFlashDigit(g_screen, 2, 3, 20);
+    } else if (g_mode == UI_MODE_SET_TIME_HOUR || g_mode == UI_MODE_SET_ALARM_HOUR) {
+        DisplayFlashDigit(g_screen, 0, 1, 20);
+    }
+
+    if (g_mode == UI_MODE_SET_ALARM_MIN || g_mode == UI_MODE_SET_ALARM_HOUR) {
+        for (int i = 0; i < 4; i++) {
+            ScreenEnablePoint(g_screen, i);
         }
+    }
+}
 
-        if(ClockIsAlarmTriggered(clock)){
-            AlarmLedOn(board->alarm_led);
-            if(DigitalInputGetIsActive(board->cancel)){
-                ClockCancelAlarm(clock);
-                AlarmLedOff(board->alarm_led);
-                while (DigitalInputGetIsActive(board->cancel));
-            }
+board_t AppInit(void) {
+    g_board = board_create();
+    g_screen = g_board->screen;
+    g_clock = ClockCreate(1000, 5);
+    memset(&g_edit, 0, sizeof(g_edit));
+    memset(&g_alarm_cfg, 0, sizeof(g_alarm_cfg));
+    g_timeout = xTimerCreate("inact", pdMS_TO_TICKS(30000), pdFALSE, NULL, ui_timeout_cb);
+    return g_board;
+}
 
-            if(DigitalInputGetIsActive(board->accept)){
-                ClockSnooze(clock);
-                AlarmLedOff(board->alarm_led);
-                while (DigitalInputGetIsActive(board->accept));
-            }
-        }else {
-            AlarmLedOff(board->alarm_led);
+void TaskClock(void *param) {
+    (void)param;
+    uint32_t ms = 0;
+    for (;;) {
+        ClockNewTick(g_clock);
+        vTaskDelay(pdMS_TO_TICKS(1));
+        ms++;
+        if (ms >= 1000) {
+            ms = 0;
+            g_blink_sec = !g_blink_sec;
         }
+        if (ClockIsAlarmTriggered(g_clock)) {
+            AlarmLedOn(g_board->alarm_led);
+        } else {
+            AlarmLedOff(g_board->alarm_led);
+        }
+    }
+}
 
-        if (DigitalInputGetIsActive(board->set_time)) {
-            hold_ticks_time++;
-            if (hold_ticks_time >= 3 * TICKS_FOR_SECOND) {
-                state = STATE_SET_TIME_MINUTES;
-                ClockGetTime(clock, &current_time);
-                memcpy(&backup_time, &current_time, sizeof(clock_time_t));
-                DisplayFlashDigit(board->screen, 0, 1, 50); 
-                hold_ticks_time = 0;
+void TaskButtons(void *param) {
+    (void)param;
+    uint32_t f1 = 0, f2 = 0;
+    for (;;) {
+        if (DigitalInputGetIsActive(g_board->set_time)) {
+            f1 += 20;
+            if (f1 >= 3000 && g_mode == UI_MODE_NORMAL) {
+                ClockGetTime(g_clock, &g_edit);
+                g_mode = UI_MODE_SET_TIME_MIN;
+                ui_start_timeout();
             }
         } else {
-            hold_ticks_time = 0;
+            f1 = 0;
         }
 
-        if (DigitalInputGetIsActive(board->set_alarm)) {
-            hold_ticks_alarm++;
-            if (hold_ticks_alarm >= 3 * TICKS_FOR_SECOND && time_set) {
-                state = STATE_SET_ALARM_MINUTES;
-                memcpy(&current_time, &alarm_time, sizeof(clock_time_t));
-                memcpy(&backup_alarm_time, &alarm_time, sizeof(clock_time_t));
-                ScreenEnablePoint(board->screen, 0);
-                ScreenEnablePoint(board->screen, 1);
-                ScreenEnablePoint(board->screen, 2);
-                ScreenEnablePoint(board->screen, 3);
-                DisplayFlashDigit(board->screen, 0, 1, 50);
-                inactive_ticks = 0; 
-                hold_ticks_alarm = 0;
+        if (DigitalInputGetIsActive(g_board->set_alarm)) {
+            f2 += 20;
+            if (f2 >= 3000 && g_mode == UI_MODE_NORMAL) {
+                ClockGetAlarm(g_clock, &g_edit);
+                g_mode = UI_MODE_SET_ALARM_MIN;
+                ui_start_timeout();
             }
         } else {
-            hold_ticks_alarm = 0;
+            f2 = 0;
         }
-        if (alarm_active) {
-            ScreenEnablePoint(board->screen, 3);
-        } else {
-            ScreenDisablePoint(board->screen, 3);
+
+        if (DigitalWasActive(g_board->increment)) {
+            if (g_mode == UI_MODE_SET_TIME_MIN || g_mode == UI_MODE_SET_ALARM_MIN) {
+                int min = g_edit.time.minutes[0] + g_edit.time.minutes[1] * 10;
+                min = (min + 1) % 60;
+                g_edit.time.minutes[0] = (uint8_t)(min % 10);
+                g_edit.time.minutes[1] = (uint8_t)(min / 10);
+                ui_start_timeout();
+            } else if (g_mode == UI_MODE_SET_TIME_HOUR || g_mode == UI_MODE_SET_ALARM_HOUR) {
+                int hour = g_edit.time.hours[0] + g_edit.time.hours[1] * 10;
+                hour = (hour + 1) % 24;
+                g_edit.time.hours[0] = (uint8_t)(hour % 10);
+                g_edit.time.hours[1] = (uint8_t)(hour / 10);
+                ui_start_timeout();
+            }
         }
-        if (DigitalInputGetIsActive(board->accept)&&alarm_set) {
-            alarm_active = true;
-            while (DigitalInputGetIsActive(board->accept));
+
+        if (DigitalWasActive(g_board->decrement)) {
+            if (g_mode == UI_MODE_SET_TIME_MIN || g_mode == UI_MODE_SET_ALARM_MIN) {
+                int min = g_edit.time.minutes[0] + g_edit.time.minutes[1] * 10;
+                min = (min + 59) % 60;
+                g_edit.time.minutes[0] = (uint8_t)(min % 10);
+                g_edit.time.minutes[1] = (uint8_t)(min / 10);
+                ui_start_timeout();
+            } else if (g_mode == UI_MODE_SET_TIME_HOUR || g_mode == UI_MODE_SET_ALARM_HOUR) {
+                int hour = g_edit.time.hours[0] + g_edit.time.hours[1] * 10;
+                hour = (hour + 23) % 24;
+                g_edit.time.hours[0] = (uint8_t)(hour % 10);
+                g_edit.time.hours[1] = (uint8_t)(hour / 10);
+                ui_start_timeout();
+            }
         }
-        if (DigitalInputGetIsActive(board->cancel)&&alarm_set){
-            alarm_active = false;
-            while (DigitalInputGetIsActive(board->cancel));
-        }
-        
-        break;
 
-    case STATE_SET_TIME_MINUTES:
-        {
-            inactive_ticks++;
-            if (inactive_ticks >= 30 * TICKS_FOR_SECOND) {
-                ClockSetTime(clock, &backup_time);
-                state = STATE_CLOCK_RUNNING;
-                inactive_ticks = 0;
-                return;
-            }
-            
-            
-            uint8_t display_bcd[4] = {
-                current_time.bcd[5],  
-                current_time.bcd[4],  
-                current_time.bcd[3],  
-                current_time.bcd[2] 
-            };
-            ScreenWriteBCD(board->screen, display_bcd, 4);
-            DisplayFlashDigit(board->screen, 0, 1, 50);
-
-            if (DigitalInputGetIsActive(board->increment)) {
-                inactive_ticks = 0;
-                current_time.time.minutes[0]++;
-                if (current_time.time.minutes[0] > 9) {
-                    current_time.time.minutes[0] = 0;
-                    current_time.time.minutes[1]++;
-                    if (current_time.time.minutes[1] > 5) {
-                        current_time.time.minutes[1] = 0;
-                    }
-                }
-                while (DigitalInputGetIsActive(board->increment));
-            }
-
-            if (DigitalInputGetIsActive(board->decrement)) {
-                inactive_ticks = 0;
-                if (current_time.time.minutes[0] == 0) {
-                    current_time.time.minutes[0] = 9;
-                    if (current_time.time.minutes[1] == 0) {
-                        current_time.time.minutes[1] = 5;
-                    } else {
-                        current_time.time.minutes[1]--;
-                    }
-                } else {
-                    current_time.time.minutes[0]--;
-                }
-                while (DigitalInputGetIsActive(board->decrement));
-            }
-
-            if (DigitalInputGetIsActive(board->accept)) {
-                inactive_ticks = 0;
-                inactive_ticks = 0;
-                DisplayFlashDigit(board->screen, 2, 3, 50);
-                state = STATE_SET_TIME_HOURS;
-                while (DigitalInputGetIsActive(board->accept));
-            }
-
-            if (DigitalInputGetIsActive(board->cancel)) {
-                inactive_ticks = 0;
-                ClockSetTime(clock, &backup_time);
-                state = STATE_CLOCK_RUNNING;
-                while (DigitalInputGetIsActive(board->cancel));
-            }
-            break;
-        }
-        
-
-        case STATE_SET_TIME_HOURS:{
-            inactive_ticks++;
-            if (inactive_ticks >= 30 * TICKS_FOR_SECOND) {
-                ClockSetTime(clock, &backup_time);
-                state = STATE_CLOCK_RUNNING;
-                inactive_ticks = 0;
-                return;
-            }
-
-            uint8_t display_bcd[4]={
-                current_time.bcd[5],  
-                current_time.bcd[4],  
-                current_time.bcd[3],  
-                current_time.bcd[2] 
-            };
-            ScreenWriteBCD(board->screen, display_bcd, 4);
-            DisplayFlashDigit(board->screen, 2, 3, 50);
-
-            if (DigitalInputGetIsActive(board->increment))
-            {
-                inactive_ticks = 0;
-                current_time.time.hours[0]++;
-                if ((current_time.time.hours[1]==2 && current_time.time.hours[0]>3) || current_time.time.hours[0]>9) {
-                    current_time.time.hours[0] = 0;
-                    current_time.time.hours[1]++;
-                    if (current_time.time.hours[1] > 2) {
-                        current_time.time.hours[1] = 0;
-                    }
-                }
-                while (DigitalInputGetIsActive(board->increment));
-            }
-
-            if (DigitalInputGetIsActive(board->decrement))
-            {
-                inactive_ticks = 0;
-                if (current_time.time.hours[0] == 0) {
-                    current_time.time.hours[0] = 9;
-                    if (current_time.time.hours[1] == 0) {
-                        current_time.time.hours[1] = 2;
-                    } else {
-                        current_time.time.hours[1]--;
-                    }
-                    if(current_time.time.hours[1] == 2 && current_time.time.hours[0] > 3) {
-                        current_time.time.hours[0] = 3;
-                    }
-                }else {
-                    current_time.time.hours[0]--;
-                }
-                while (DigitalInputGetIsActive(board->decrement));
-            }
-            if (DigitalInputGetIsActive(board->accept))
-            {
-                inactive_ticks = 0;
-                time_set = true;
-                ClockSetTime(clock, &current_time);
-                state = STATE_CLOCK_RUNNING;
-                while (DigitalInputGetIsActive(board->accept));
-            }
-
-            if(DigitalInputGetIsActive(board->cancel)) {
-                inactive_ticks = 0;
-                ClockSetTime(clock, &backup_time);
-                state = STATE_CLOCK_RUNNING;
-                while (DigitalInputGetIsActive(board->cancel));
-            }
-            break;
-        }
-    case STATE_SET_ALARM_MINUTES:{
-        inactive_ticks++;
-        if (inactive_ticks >= 30 * TICKS_FOR_SECOND) {
-            memcpy(&alarm_time, &backup_alarm_time, sizeof(clock_time_t));
-            state = STATE_CLOCK_RUNNING;
-            inactive_ticks = 0;
-            return;
-        }
-        uint8_t display_bcd[4] = {
-            alarm_time.bcd[5],  
-            alarm_time.bcd[4],  
-            alarm_time.bcd[3],  
-            alarm_time.bcd[2] 
-        };
-        ScreenWriteBCD(board->screen, display_bcd, 4);
-        ScreenEnablePoint(board->screen, 0);
-        ScreenEnablePoint(board->screen, 1);
-        ScreenEnablePoint(board->screen, 2);
-        ScreenEnablePoint(board->screen, 3);
-        DisplayFlashPoints(board->screen, 1, 1, 0);
-        DisplayFlashDigit(board->screen, 0, 1, 50);
-        if (DigitalInputGetIsActive(board->increment)) {
-            inactive_ticks = 0;
-            alarm_time.time.minutes[0]++;
-            if (alarm_time.time.minutes[0] > 9) {
-                alarm_time.time.minutes[0] = 0;
-                alarm_time.time.minutes[1]++;
-                if (alarm_time.time.minutes[1] > 5) {
-                    alarm_time.time.minutes[1] = 0;
-                }
-            }
-            while (DigitalInputGetIsActive(board->increment));
-        }
-        if (DigitalInputGetIsActive(board->decrement)) {
-            inactive_ticks = 0;
-            if (alarm_time.time.minutes[0] == 0) {
-                alarm_time.time.minutes[0] = 9;
-                if (alarm_time.time.minutes[1] == 0) {
-                    alarm_time.time.minutes[1] = 5;
-                } else {
-                    alarm_time.time.minutes[1]--;
-                }
+        if (DigitalWasActive(g_board->accept)) {
+            if (g_mode == UI_MODE_SET_TIME_MIN) {
+                g_mode = UI_MODE_SET_TIME_HOUR;
+                ui_start_timeout();
+            } else if (g_mode == UI_MODE_SET_TIME_HOUR) {
+                ClockSetTime(g_clock, &g_edit);
+                g_mode = UI_MODE_NORMAL;
+            } else if (g_mode == UI_MODE_SET_ALARM_MIN) {
+                g_mode = UI_MODE_SET_ALARM_HOUR;
+                ui_start_timeout();
+            } else if (g_mode == UI_MODE_SET_ALARM_HOUR) {
+                g_alarm_cfg = g_edit;
+                g_mode = UI_MODE_NORMAL;
             } else {
-                alarm_time.time.minutes[0]--;
-            }
-            while (DigitalInputGetIsActive(board->decrement));
-        }
-
-        if (DigitalInputGetIsActive(board->accept)) {
-            inactive_ticks = 0;
-            DisplayFlashDigit(board->screen, 2, 3, 50);
-            state = STATE_SET_ALARM_HOURS;
-            while (DigitalInputGetIsActive(board->accept));
-        }
-        
-        if (DigitalInputGetIsActive(board->cancel)) {
-            inactive_ticks = 0;
-            memcpy(&alarm_time, &backup_alarm_time, sizeof(clock_time_t));
-            state = STATE_CLOCK_RUNNING;
-            while (DigitalInputGetIsActive(board->cancel));
-        }
-        break;
-    }
-    case STATE_SET_ALARM_HOURS:{
-        inactive_ticks++;
-        if (inactive_ticks >= 30 * TICKS_FOR_SECOND) {
-            memcpy(&alarm_time, &backup_alarm_time, sizeof(clock_time_t));
-            state = STATE_CLOCK_RUNNING;
-            inactive_ticks = 0;
-            return;
-        }
-        uint8_t display_bcd[4] = {
-            alarm_time.bcd[5],  
-            alarm_time.bcd[4],  
-            alarm_time.bcd[3],  
-            alarm_time.bcd[2] 
-        };
-        ScreenWriteBCD(board->screen, display_bcd, 4);
-        DisplayFlashDigit(board->screen, 2, 3, 50);
-        ScreenEnablePoint(board->screen, 0);
-        ScreenEnablePoint(board->screen, 1);
-        ScreenEnablePoint(board->screen, 2);
-        ScreenEnablePoint(board->screen, 3);
-
-        if (DigitalInputGetIsActive(board->increment)) {
-            inactive_ticks = 0;
-            alarm_time.time.hours[0]++;
-            if ((alarm_time.time.hours[1]==2 && alarm_time.time.hours[0]>3) || alarm_time.time.hours[0]>9) {
-                alarm_time.time.hours[0] = 0;
-                alarm_time.time.hours[1]++;
-                if (alarm_time.time.hours[1] > 2) {
-                    alarm_time.time.hours[1] = 0;
-                }
-            }
-            while (DigitalInputGetIsActive(board->increment));
-        }
-
-        if (DigitalInputGetIsActive(board->decrement)) {
-            inactive_ticks = 0;
-            if (alarm_time.time.hours[0] == 0) {
-                alarm_time.time.hours[0] = 9;
-                if (alarm_time.time.hours[1] == 0) {
-                    alarm_time.time.hours[1] = 2;
+                if (ClockIsAlarmTriggered(g_clock)) {
+                    ClockSnooze(g_clock);
                 } else {
-                    alarm_time.time.hours[1]--;
+                    ClockSetAlarm(g_clock, &g_alarm_cfg);
                 }
-                if(alarm_time.time.hours[1] == 2 && alarm_time.time.hours[0] > 3) {
-                    alarm_time.time.hours[0] = 3;
-                }
-            }else {
-                alarm_time.time.hours[0]--;
             }
-            while (DigitalInputGetIsActive(board->decrement));
         }
 
-        if (DigitalInputGetIsActive(board->accept)) {
-            inactive_ticks = 0;
-            alarm_set = true;
-            alarm_active = true;
-            ClockSetAlarm(clock, &alarm_time);
-            state = STATE_CLOCK_RUNNING;
-            while (DigitalInputGetIsActive(board->accept));
-            
+        if (DigitalWasActive(g_board->cancel)) {
+            if (g_mode == UI_MODE_SET_TIME_MIN || g_mode == UI_MODE_SET_TIME_HOUR ||
+                g_mode == UI_MODE_SET_ALARM_MIN || g_mode == UI_MODE_SET_ALARM_HOUR) {
+                g_mode = UI_MODE_NORMAL;
+            } else {
+                if (ClockIsAlarmTriggered(g_clock)) {
+                    ClockCancelAlarm(g_clock);
+                } else {
+                    ClockDisableAlarm(g_clock);
+                }
+            }
         }
 
-        if (DigitalInputGetIsActive(board->cancel)) {
-            inactive_ticks = 0;
-            memcpy(&alarm_time, &backup_alarm_time, sizeof(clock_time_t));
-            state = STATE_CLOCK_RUNNING;
-            while (DigitalInputGetIsActive(board->cancel));
-        }
-        break;
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
+
+void TaskUI(void *param) {
+    (void)param;
+    for (;;) {
+        ui_render();
+        ScreenRefresh(g_screen);
+        vTaskDelay(pdMS_TO_TICKS(5));
+    }
 }
 
 

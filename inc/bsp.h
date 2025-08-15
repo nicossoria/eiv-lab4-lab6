@@ -116,7 +116,7 @@ typedef struct board_s {
     digital_input_t accept;     /**< Botón para confirmar selección */
     digital_input_t cancel;     /**< Botón para cancelar selección */
     screen_t screen;            /**< Pantalla de 7 segmentos */
-} const * const board_t;
+} const * board_t;
 
 /* === Public variable declarations ================================================================================ */
 
